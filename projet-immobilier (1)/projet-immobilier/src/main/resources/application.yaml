@@ -1,0 +1,185 @@
+spring:
+  application:
+    name: projet-immobilier
+  profiles:
+    active: production
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      max-lifetime: 1200000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update 
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 20
+          order_inserts: true
+          order_updates: true
+
+  # Configuration Flyway pour les migrations automatiques
+  flyway:
+    enabled: false # Désactivé temporairement à cause du conflit de checksum
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    lock-retry-count: 50 # Augmenter le nombre de tentatives
+    lock-retry-delay: 1000 # Délai entre les tentatives en millisecondes
+
+  # Configuration JWT sécurisée
+  jwt:
+    secret: ${JWT_SECRET:256-bit-secret-key-that-must-be-at-least-256-bits-long-for-hs256-algorithm}
+    expiration: ${JWT_EXPIRATION:86400000} # 24 heures
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 jours
+
+  # Configuration Spring Mail
+  mail:
+    host: ${SMTP_HOST:smtp-relay.brevo.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    protocol: smtp
+
+  # Configuration upload fichiers
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
+      enabled: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  # Configuration HTTPS pour production
+  ssl:
+    enabled: ${SSL_ENABLED:false}
+    key-store: ${SSL_KEYSTORE_PATH:}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD:}
+    key-store-type: PKCS12
+
+# Configuration Brevo
+brevo:
+  api-key:  ${BREVO_API_KEY}
+  url: https://api.brevo.com/v3/smtp/email
+  sms:
+    enabled: ${BREVO_SMS_ENABLED:true}
+    sender: ${BREVO_SMS_SENDER:ProjetImmo}
+
+# Configuration CORS sécurisée
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:3001}
+
+# Configuration sécurité et frontend URL
+app:
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:3000}
+  security:
+    require-https: ${REQUIRE_HTTPS:false}
+    max-login-attempts: 5
+    lock-time-minutes: 30
+  # Configuration Admin par défaut pour l'entreprise
+  admin:
+    default-email: ${ADMIN_EMAIL:admin@entreprise.com}
+    default-username: ${ADMIN_USERNAME:admin}
+    default-password: ${ADMIN_PASSWORD:Admin2024!}
+    default-nom: ${ADMIN_NOM:Administrateur}
+    default-prenom: ${ADMIN_PRENOM:Entreprise}
+
+# ===============================
+# ACTUATOR & MONITORING
+# ===============================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  security:
+    enabled: true
+
+# ===============================
+# LOGGING CONFIGURATION
+# ===============================
+logging:
+  level:
+    com.projetimmo.projet_immobilier: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/application.log
+    max-size: 10MB
+    max-history: 30
+
+# ===============================
+# 🔧 DEV/PROD PROFILES
+# ===============================
+---
+# Profil de développement
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    com.projetimmo.projet_immobilier: DEBUG
+    org.springframework.security: DEBUG
+
+app:
+  security:
+    require-https: false
+
+---
+# Profil de production
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+logging:
+  level:
+    com.projetimmo.projet_immobilier: WARN
+    org.springframework.security: WARN
+
+app:
+  security:
+    require-https: true
+
+server:
+  ssl:
+    enabled: true

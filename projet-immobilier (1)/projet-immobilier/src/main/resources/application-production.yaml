@@ -1,0 +1,67 @@
+# Configuration de production pour Projet Immobilier
+spring:
+  # Configuration base de données production
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/projet_immo}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+
+  # Configuration JPA pour la production
+  jpa:
+    hibernate:
+      ddl-auto: update # Ne pas modifier le schéma en production
+    show-sql: false
+    format-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Configuration Flyway pour la production (désactivé temporairement)
+  flyway:
+    enabled: false
+
+# Configuration CORS pour le frontend
+cors:
+  allowed-origins: http://localhost:3000,http://127.0.0.1:3000
+
+# Configuration sécurité
+app:
+  security:
+    require-https: false # Désactiver HTTPS en développement
+    max-login-attempts: 5
+    lock-time-minutes: 30
+
+# Configuration Brevo pour la production
+brevo:
+  api-key: ${BREVO_API_KEY}
+  url: https://api.brevo.com/v3/smtp/email
+  sms:
+    enabled: ${BREVO_SMS_ENABLED:true}
+    sender: ${BREVO_SMS_SENDER:ProjetImmo}
+
+# Configuration JWT pour la production
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 heures
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7 jours
+
+# Configuration logging pour la production
+logging:
+  level:
+    com.projetimmo: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+  file:
+    name: logs/application.log
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# Configuration SSL pour la production
+server:
+  ssl:
+    enabled: false
+  port: 8080
