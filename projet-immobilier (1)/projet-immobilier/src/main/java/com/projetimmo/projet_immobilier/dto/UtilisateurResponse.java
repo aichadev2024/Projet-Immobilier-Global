@@ -27,5 +27,4 @@ public class UtilisateurResponse {
     private int ventesRealisees;
     private String specialite;
     private String permis;
-    private String roleAgent;
 }

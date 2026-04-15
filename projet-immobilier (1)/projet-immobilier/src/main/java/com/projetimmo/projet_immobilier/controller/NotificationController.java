@@ -23,30 +23,34 @@ public class NotificationController {
 
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<NotificationResponse>> getMesNotifications(Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> getMesNotifications(Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body("Utilisateur non trouvé");
         return ResponseEntity.ok(notificationService.getMyNotifications(user.getId()));
     }
 
     @GetMapping("/non-lues")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Long> getNombreNotificationsNonLues(Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> getNombreNotificationsNonLues(Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).body(0L);
         return ResponseEntity.ok(notificationService.getNombreNotificationsNonLues(user.getId()));
     }
 
     @PutMapping("/{id}/marquer-lu")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> marquerCommeLu(@PathVariable Long id, Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> marquerCommeLu(@PathVariable Long id, Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).build();
         notificationService.markAsRead(id, user.getId());
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/marquer-toutes-lues")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<Void> marquerToutesLues(Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> marquerToutesLues(Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).build();
         notificationService.markAllAsRead(user.getId());
         return ResponseEntity.ok().build();
     }

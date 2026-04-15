@@ -41,10 +41,12 @@ interface AgenceProfile {
     samedi: string;
     dimanche: string;
   };
-  statut: "ACTIF" | "EN_ATTENTE" | "INACTIF";
+  statut: "ACTIF" | "EN_ATTENTE" | "INACTIF" | "VERIFIEE";
   ninea?: string;
   numeroLicence?: string;
   dateCreation: string;
+  visitePayante: boolean;
+  tarifVisite?: number;
 }
 
 export default function AgenceProfil() {
@@ -67,6 +69,8 @@ export default function AgenceProfil() {
     description: "",
     ninea: "",
     numeroLicence: "",
+    visitePayante: false,
+    tarifVisite: 0,
     horairesOuverture: {
       lundi: "08:00-18:00",
       mardi: "08:00-18:00",
@@ -99,10 +103,21 @@ export default function AgenceProfil() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log("🏢 Agence profile received:", data);
+        // Mapping safe pour les horaires (backend stores as String/JSON)
+        let parsedHoraires = formData.horairesOuverture;
+        if (typeof data.horairesOuverture === 'string') {
+          try {
+            parsedHoraires = JSON.parse(data.horairesOuverture);
+          } catch (e) {
+            console.error("Erreur parsing horaires:", e);
+          }
+        } else if (data.horairesOuverture && typeof data.horairesOuverture === 'object') {
+          parsedHoraires = data.horairesOuverture;
+        }
+
         setProfile(data);
         setFormData({
-          nomAgence: data.nom || data.nomAgence || "", // Backend returns 'nom', interface uses 'nomAgence'
+          nomAgence: data.nom || data.nomAgence || "",
           email: data.email || "",
           telephone: data.telephone || "",
           adresse: data.adresse || "",
@@ -113,7 +128,9 @@ export default function AgenceProfil() {
           description: data.description || "",
           ninea: data.ninea || "",
           numeroLicence: data.numeroLicence || "",
-          horairesOuverture: data.horairesOuverture || formData.horairesOuverture
+          visitePayante: data.visitePayante || false,
+          tarifVisite: data.tarifVisite || 0,
+          horairesOuverture: parsedHoraires
         });
       } else {
         // Utiliser des données mock si le backend n'est pas prêt
@@ -157,6 +174,8 @@ export default function AgenceProfil() {
           description: mockProfile.description || "",
           ninea: mockProfile.ninea || "",
           numeroLicence: mockProfile.numeroLicence || "",
+          visitePayante: mockProfile.visitePayante || false,
+          tarifVisite: mockProfile.tarifVisite || 0,
           horairesOuverture: mockProfile.horairesOuverture
         });
       }
@@ -179,7 +198,11 @@ export default function AgenceProfil() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          nom: formData.nomAgence, // Map back to backend name
+          horairesOuverture: JSON.stringify(formData.horairesOuverture) // Backend expectations as String/JSON
+        })
       });
 
       if (response.ok) {
@@ -216,6 +239,7 @@ export default function AgenceProfil() {
   const getStatutBadge = (statut: string) => {
     const badges = {
       "ACTIF": { color: "bg-green-100 text-green-800", icon: <CheckCircle className="w-4 h-4" />, label: "Actif" },
+      "VERIFIEE": { color: "bg-blue-100 text-blue-800", icon: <CheckCircle className="w-4 h-4" />, label: "Vérifiée" },
       "EN_ATTENTE": { color: "bg-yellow-100 text-yellow-800", icon: <Clock className="w-4 h-4" />, label: "En attente" },
       "INACTIF": { color: "bg-red-100 text-red-800", icon: <X className="w-4 h-4" />, label: "Inactif" }
     };
@@ -473,6 +497,49 @@ export default function AgenceProfil() {
                   className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-medium disabled:bg-gray-50 disabled:text-gray-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Paramètres de Visite */}
+      <div className="bg-white rounded-xl shadow-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Paramètres de visite</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="flex items-start gap-4 p-4 border border-gray-100 rounded-xl bg-gray-50/30">
+            <div className={`mt-1 flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${formData.visitePayante ? 'bg-amber-100 text-amber-600' : 'bg-green-100 text-green-600'}`}>
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <label className="text-base font-bold text-gray-900 block mb-1">Visites payantes</label>
+              <p className="text-sm text-gray-500 mb-3">Activez cette option si vous facturez les visites de biens aux clients.</p>
+              <button
+                type="button"
+                onClick={() => editing && handleInputChange('visitePayante', !formData.visitePayante as any)}
+                disabled={!editing}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+                  formData.visitePayante 
+                    ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/20' 
+                    : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                {formData.visitePayante ? 'Activé' : 'Désactivé'}
+              </button>
+            </div>
+          </div>
+
+          <div className={`transition-all duration-300 ${!formData.visitePayante ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Tarif de visite (FCFA)</label>
+            <div className="relative">
+              <input
+                type="number"
+                value={formData.tarifVisite}
+                onChange={(e) => handleInputChange('tarifVisite', e.target.value)}
+                disabled={!editing || !formData.visitePayante}
+                placeholder="Ex: 5000"
+                className="w-full pl-4 pr-16 py-3 bg-white border border-gray-300 rounded-lg text-gray-900 font-bold focus:ring-2 focus:ring-amber-500 transition-all"
+              />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">FCFA</span>
             </div>
           </div>
         </div>

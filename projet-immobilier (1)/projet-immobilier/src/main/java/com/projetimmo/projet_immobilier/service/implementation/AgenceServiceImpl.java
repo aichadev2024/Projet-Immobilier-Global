@@ -191,18 +191,24 @@ public class AgenceServiceImpl implements AgenceService {
     @Override
     @Transactional(readOnly = true)
     public Agence getMyProfile(String username) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(username)
+        Utilisateur user = utilisateurRepository.findByNomUtilisateurWithAgence(username)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur non trouvé"));
-        if (user.getAgence() == null) {
+        
+        // Vérifier si l'utilisateur est une agence ou un agent
+        String role = user.getRole().getNom();
+        Agence agence = user.getAgence();
+        
+        if (agence == null) {
+            // Si c'est un agent sans agence chargée, chercher via le repository
+            if ("AGENT".equals(role)) {
+                // Essayer de trouver l'agence associée à cet agent
+                Optional<Agence> agenceOpt = agenceRepository.findByAgentId(user.getId());
+                if (agenceOpt.isPresent()) {
+                    return agenceOpt.get();
+                }
+            }
             throw new IllegalArgumentException("Veuillez finaliser la configuration de votre agence.");
         }
-        
-        // Initialize lazy-loaded collections to prevent JSON serialization issues
-        Agence agence = user.getAgence();
-        if (agence.getUtilisateurs() != null) {
-            agence.getUtilisateurs().size(); // Force initialization
-        }
-        
         return agence;
     }
 
@@ -222,6 +228,8 @@ public class AgenceServiceImpl implements AgenceService {
         agence.setDescription(agenceData.getDescription() != null ? agenceData.getDescription() : agence.getDescription());
         agence.setNinea(agenceData.getNinea() != null ? agenceData.getNinea() : agence.getNinea());
         agence.setHorairesOuverture(agenceData.getHorairesOuverture() != null ? agenceData.getHorairesOuverture() : agence.getHorairesOuverture());
+        agence.setVisitePayante(agenceData.getVisitePayante() != null ? agenceData.getVisitePayante() : agence.getVisitePayante());
+        agence.setTarifVisite(agenceData.getTarifVisite() != null ? agenceData.getTarifVisite() : agence.getTarifVisite());
 
         return agenceRepository.save(agence);
     }
@@ -246,7 +254,6 @@ public class AgenceServiceImpl implements AgenceService {
                         .ventesRealisees(u.getVentesRealisees())
                         .specialite(u.getSpecialite())
                         .permis(u.getPermis())
-                        .roleAgent(u.getRoleAgent())
                         .createdAt(u.getCreatedAt())
                         .build())
                 .toList();
@@ -279,7 +286,6 @@ public class AgenceServiceImpl implements AgenceService {
                 .accountNonLocked(true)
                 .role(role)
                 .agence(agence)
-                .roleAgent(request.getRole())
                 .specialite(request.getSpecialite())
                 .permis(request.getPermis())
                 .dateEmbauche(java.time.LocalDate.now())
@@ -309,7 +315,6 @@ public class AgenceServiceImpl implements AgenceService {
                 .nomUtilisateur(agent.getNomUtilisateur())
                 .role(agent.getRole().getNom())
                 .statut(agent.getStatut().name())
-                .roleAgent(agent.getRoleAgent())
                 .dateEmbauche(agent.getDateEmbauche())
                 .build();
     }

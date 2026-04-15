@@ -36,6 +36,14 @@ public class BienResponse {
     // Informations de l'agence
     private AgenceInfo utilisateur;
     
+    // ID et infos du créateur (Agent/Agence)
+    private String createdById;
+    private String createdByNom;
+    private String createdByPrenom;
+    
+    // 🔒 Commentaire de vérification par l'agence
+    private String commentaireVerification;
+    
     // Caractéristiques du bien
     private CaracteristiquesInfo caracteristiques;
     

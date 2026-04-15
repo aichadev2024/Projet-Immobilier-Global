@@ -34,7 +34,10 @@ public class AnnonceResponse {
     // Agence
     private String agenceNom;
     
-    // 🔥 NOUVEAU
+    // Médias et méta
     private List<String> images;
     private TransactionType transactionType;
+    
+    // ID du créateur (lié au bien)
+    private String createdById;
 }

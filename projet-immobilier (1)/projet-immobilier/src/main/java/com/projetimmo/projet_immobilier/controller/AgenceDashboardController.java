@@ -4,8 +4,10 @@ import com.projetimmo.projet_immobilier.entity.Utilisateur;
 import com.projetimmo.projet_immobilier.enums.StatutBien;
 import com.projetimmo.projet_immobilier.repository.BienRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import com.projetimmo.projet_immobilier.repository.UtilisateurRepository;
@@ -20,7 +22,7 @@ import com.projetimmo.projet_immobilier.dto.AgenceDashboardStatsDto;
 @RestController
 @RequestMapping("/api/agence/dashboard")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('AGENCE')")
+@PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
 public class AgenceDashboardController {
 
         private final BienRepository bienRepository;
@@ -28,9 +30,22 @@ public class AgenceDashboardController {
 
         // 
         @GetMapping("/stats")
-        public AgenceDashboardStatsDto getStats(Authentication authentication) {
+        @Transactional(readOnly = true)
+        public ResponseEntity<AgenceDashboardStatsDto> getStats(Authentication authentication) {
                 Utilisateur user = utilisateurRepository.findByNomUtilisateur(authentication.getName())
                                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                // Vérifier si l'utilisateur a une agence associée
+                if (user.getAgence() == null) {
+                        return ResponseEntity.badRequest().body(
+                                AgenceDashboardStatsDto.builder()
+                                        .biensTotal(0)
+                                        .biensDisponibles(0)
+                                        .biensLoues(0)
+                                        .biensVendus(0)
+                                        .build()
+                        );
+                }
 
                 UUID agenceId = user.getAgence().getId();
 
@@ -55,19 +70,27 @@ public class AgenceDashboardController {
                                 .filter(bien -> !bien.getIsDeleted() && bien.getAgence().getId().equals(agenceId) && bien.getStatutBien() == StatutBien.VENDU)
                                 .count();
 
-                return AgenceDashboardStatsDto.builder()
-                                .biensTotal(total)
-                                .biensDisponibles(disponibles)
-                                .biensLoues(loues)
-                                .biensVendus(vendus)
-                                .build();
+                return ResponseEntity.ok(
+                                AgenceDashboardStatsDto.builder()
+                                        .biensTotal(total)
+                                        .biensDisponibles(disponibles)
+                                        .biensLoues(loues)
+                                        .biensVendus(vendus)
+                                        .build()
+                );
         }
 
         // 
         @GetMapping("/proprietes")
+        @Transactional(readOnly = true)
         public List<AgencePropertyDashboardDto> getProprietes(Authentication authentication) {
                 Utilisateur user = utilisateurRepository.findByNomUtilisateur(authentication.getName())
                                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                // Retourner liste vide si pas d'agence
+                if (user.getAgence() == null) {
+                        return List.of();
+                }
 
                 return bienRepository.findAll()
                                 .stream()
@@ -83,9 +106,15 @@ public class AgenceDashboardController {
 
         // 
         @GetMapping("/biens-loues")
+        @Transactional(readOnly = true)
         public List<BienLoueDashboardDto> getBiensLoues(Authentication authentication) {
                 Utilisateur user = utilisateurRepository.findByNomUtilisateur(authentication.getName())
                                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                // Retourner liste vide si pas d'agence
+                if (user.getAgence() == null) {
+                        return List.of();
+                }
 
                 return bienRepository.findAll()
                                 .stream()

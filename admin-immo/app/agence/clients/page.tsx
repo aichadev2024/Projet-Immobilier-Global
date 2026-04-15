@@ -27,36 +27,34 @@ export default function AgenceClients() {
   const [filterStatut, setFilterStatut] = useState("TOUS");
 
   React.useEffect(() => {
-    const fetchContacts = async () => {
+    const fetchClients = async () => {
       const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
       if (!token) return;
       try {
-        const res = await fetch("http://localhost:8080/api/contacts/agence/recus", {
+        const res = await fetch("http://localhost:8080/api/utilisateurs/clients/mes-clients", {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.success && data.contacts) {
-            setClients(data.contacts.map((c: any) => ({
-              id: c.id.toString(),
-              nom: c.client ? `${c.client.prenom} ${c.client.nom}` : "Client Inconnu",
-              email: c.client?.email || "N/A",
-              telephone: c.client?.telephone || "N/A",
-              statut: c.statut || "EN_ATTENTE",
-              typeRecherche: c.bien ? `Contact pour: ${c.bien.libelle}` : "Information générale",
-              budget: c.bien?.prixCalculer ? new Intl.NumberFormat('fr-ML', { style: 'currency', currency: 'XOF' }).format(c.bien.prixCalculer) : "-",
-              dernierContact: new Date(c.dateContact).toLocaleDateString('fr-FR'),
-              avatar: c.client ? c.client.prenom.charAt(0).toUpperCase() : "U"
-            })));
-          }
+          setClients(data.map((u: any) => ({
+            id: u.id.toString(),
+            nom: `${u.prenom} ${u.nom}`,
+            email: u.email || "N/A",
+            telephone: u.telephone || "N/A",
+            statut: u.statut === "ACTIF" ? "REPONDU" : "LU", // Mapping arbitraire pour l'UI
+            typeRecherche: u.role || "Client",
+            budget: "-",
+            dernierContact: u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : "Date inconnue",
+            avatar: u.prenom ? u.prenom.charAt(0).toUpperCase() : "U"
+          })));
         }
       } catch (error) {
-        console.error(error);
+        console.error("Erreur chargement clients:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchContacts();
+    fetchClients();
   }, []);
 
   const filteredClients = clients.filter(client => {

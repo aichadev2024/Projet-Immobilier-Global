@@ -20,7 +20,7 @@ import com.projetimmo.projet_immobilier.dto.UtilisateurResponse;
 @RequestMapping("/api/agences")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000"})
 public class AgenceController {
 
     private final AgenceService agenceService;
@@ -128,38 +128,41 @@ public class AgenceController {
     }
 
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
     @Transactional(readOnly = true)
     public ResponseEntity<Agence> getMyProfile(Authentication authentication) {
         try {
             Agence agence = agenceService.getMyProfile(authentication.getName());
             return ResponseEntity.ok(agence);
+        } catch (IllegalArgumentException e) {
+            log.error("Agency profile not found for user {}: {}", authentication.getName(), e.getMessage());
+            return ResponseEntity.status(404).build();
         } catch (Exception e) {
-            log.error("Error fetching agency profile: {}", e.getMessage());
+            log.error("Error fetching agency profile for user {}: {}", authentication.getName(), e.getMessage(), e);
             return ResponseEntity.status(500).build();
         }
     }
 
     @PutMapping("/profile")
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
     public ResponseEntity<Agence> updateMyProfile(Authentication authentication, @RequestBody Agence agence) {
         return ResponseEntity.ok(agenceService.updateMyProfile(authentication.getName(), agence));
     }
 
     @GetMapping("/agents")
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE')")
     public ResponseEntity<List<UtilisateurResponse>> getMyAgents(Authentication authentication) {
         return ResponseEntity.ok(agenceService.getMyAgents(authentication.getName()));
     }
 
     @PostMapping("/agents")
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE')")
     public ResponseEntity<UtilisateurResponse> createMyAgent(Authentication authentication, @RequestBody AgentCreateRequest request) {
         return ResponseEntity.ok(agenceService.createMyAgent(authentication.getName(), request));
     }
 
     @DeleteMapping("/agents/{id}")
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE')")
     public ResponseEntity<Void> deleteMyAgent(Authentication authentication, @PathVariable UUID id) {
         agenceService.deleteMyAgent(authentication.getName(), id);
         return ResponseEntity.noContent().build();

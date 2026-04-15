@@ -43,6 +43,10 @@ export default function AgenceAgents() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("TOUS");
   const [filterStatut, setFilterStatut] = useState<string>("TOUS");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [agentToDelete, setAgentToDelete] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [canManageAgents, setCanManageAgents] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -59,11 +63,21 @@ export default function AgenceAgents() {
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+    const role = localStorage.getItem('role') || sessionStorage.getItem('role');
+    
     if (!token) {
       router.push("/login");
       return;
     }
 
+    // Only AGENCE role can access this page
+    if (role !== 'AGENCE') {
+      router.push("/agence/tableau-de-bord");
+      return;
+    }
+
+    setUserRole(role);
+    setCanManageAgents(role === 'AGENCE');
     fetchAgents(token);
   }, [router]);
 
@@ -253,13 +267,15 @@ export default function AgenceAgents() {
           <h1 className="text-4xl font-bold text-gray-900">Gestion des agents</h1>
           <p className="mt-3 text-lg text-gray-600">Gérez les employés de votre agence immobilière</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-base font-medium"
-        >
-          <Plus className="w-5 h-5" />
-          Ajouter un agent
-        </button>
+        {canManageAgents && (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-base font-medium"
+          >
+            <Plus className="w-5 h-5" />
+            Ajouter un agent
+          </button>
+        )}
       </div>
 
       {/* Filtres */}
@@ -338,9 +354,11 @@ export default function AgenceAgents() {
                   <button onClick={() => { setSelectedAgent(agent); setShowDetails(true); }} className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded transition-colors" title="Détails">
                     <Eye className="w-4 h-4" />
                   </button>
-                  <button className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded transition-colors" title="Modifier">
-                    <Edit2 className="w-4 h-4" />
-                  </button>
+                  {canManageAgents && (
+                    <button className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-white rounded transition-colors" title="Modifier">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -581,9 +599,11 @@ export default function AgenceAgents() {
               </div>
 
               <div className="flex gap-3 pt-6 border-t">
-                <button className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
-                  Modifier l'agent
-                </button>
+                {canManageAgents && (
+                  <button className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                    Modifier l'agent
+                  </button>
+                )}
                 <button className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
                   Voir l'historique
                 </button>

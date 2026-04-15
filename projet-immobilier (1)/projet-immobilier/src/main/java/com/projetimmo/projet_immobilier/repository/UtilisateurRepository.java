@@ -17,6 +17,9 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, UUID> 
     Optional<Utilisateur> findByEmail(String email);
 
     Optional<Utilisateur> findByNomUtilisateur(String nomUtilisateur);
+    
+    @Query("SELECT u FROM Utilisateur u LEFT JOIN FETCH u.agence WHERE u.nomUtilisateur = :nomUtilisateur")
+    Optional<Utilisateur> findByNomUtilisateurWithAgence(@Param("nomUtilisateur") String nomUtilisateur);
 
     boolean existsByEmail(String email);
 
@@ -64,4 +67,11 @@ public interface UtilisateurRepository extends JpaRepository<Utilisateur, UUID> 
 
     @Query("SELECT COUNT(u) FROM Utilisateur u WHERE u.agence.id = :agenceId AND u.role.nom = :roleIds AND u.isDeleted = false")
     long countByAgenceIdAndRoleNomAndIsDeletedFalse(@Param("agenceId") UUID agenceId, @Param("roleIds") String roleIds);
+
+    @Query("SELECT DISTINCT u FROM Utilisateur u " +
+           "WHERE u.isDeleted = false AND u.role.nom = 'UTILISATEUR' AND (" +
+           "EXISTS (SELECT ca FROM ContactAgence ca WHERE ca.client = u AND ca.agence.agence.id = :agenceId) OR " +
+           "EXISTS (SELECT r FROM Reservation r WHERE r.utilisateur = u AND r.bien.agence.id = :agenceId)" +
+           ")")
+    List<Utilisateur> findClientsByAgenceId(@Param("agenceId") UUID agenceId);
 }

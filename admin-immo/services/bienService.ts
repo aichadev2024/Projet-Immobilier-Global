@@ -30,9 +30,10 @@ export async function getBiens() {
       
       if (index < 3) {
         console.log(`Normalisation bien ${bien.id}:`, originalTransaction, "->", normalizedTransaction);
+        console.log(`Données agence pour bien ${bien.id}:`, JSON.stringify(bien.utilisateur, null, 2));
       }
       
-      return {
+      const testBien = {
         ...bien,
         libelleTypeBien: bien.libelleTypeBien || bien.typeBien?.nom || bien.typeBien?.libelle || "Bien",
         typeTransaction: normalizedTransaction,
@@ -43,6 +44,14 @@ export async function getBiens() {
         parking: bien.parking || bien.caracteristiques?.nbParking > 0 || false,
         isDemo: false,
       };
+      
+      // Forcer visite payante sur le premier bien pour test
+      if (index === 0 && testBien.utilisateur?.agence) {
+        testBien.utilisateur.agence.visitePayante = true;
+        testBien.utilisateur.agence.tarifVisite = 10000;
+      }
+      
+      return testBien;
     });
     
     console.log(`${realBiens.length} biens réels chargés`);
@@ -184,7 +193,15 @@ function getDemoBiens() {
       images: [getLocalImage(0)],
       nbChambres: 4,
       nbSalles: 2,
-      isDemo: true
+      isDemo: true,
+      utilisateur: {
+        nom: "Agence Prestige",
+        telephone: "+22320202020",
+        agence: {
+          visitePayante: true,
+          tarifVisite: 5000
+        }
+      }
     },
     {
       id: 1002,
@@ -198,7 +215,15 @@ function getDemoBiens() {
       images: [getLocalImage(1)],
       nbChambres: 2,
       nbSalles: 1,
-      isDemo: true
+      isDemo: true,
+      utilisateur: {
+        nom: "Immo City",
+        telephone: "+22320202021",
+        agence: {
+          visitePayante: false,
+          tarifVisite: 0
+        }
+      }
     },
     {
       id: 1003,
@@ -212,7 +237,15 @@ function getDemoBiens() {
       images: [getLocalImage(2)],
       nbChambres: 1,
       nbSalles: 1,
-      isDemo: true
+      isDemo: true,
+      utilisateur: {
+        nom: "Student Housing",
+        telephone: "+22320202022",
+        agence: {
+          visitePayante: false,
+          tarifVisite: 0
+        }
+      }
     },
     {
       id: 1004,
@@ -226,7 +259,15 @@ function getDemoBiens() {
       images: [getLocalImage(3)],
       nbChambres: 5,
       nbSalles: 2,
-      isDemo: true
+      isDemo: true,
+      utilisateur: {
+        nom: "Habitat Mali",
+        telephone: "+22320202023",
+        agence: {
+          visitePayante: true,
+          tarifVisite: 7500
+        }
+      }
     },
     {
       id: 1005,
@@ -239,7 +280,15 @@ function getDemoBiens() {
       typeTransaction: "VENTE",
       images: [getLocalImage(4)],
       nbSalles: 3,
-      isDemo: true
+      isDemo: true,
+      utilisateur: {
+        nom: "Business Properties",
+        telephone: "+22320202024",
+        agence: {
+          visitePayante: false,
+          tarifVisite: 0
+        }
+      }
     }
   ];
 }

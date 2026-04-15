@@ -19,10 +19,8 @@ public class BienRequest {
     @NotBlank(message = "L'adresse est obligatoire")
     private String adresse;
     
-    @NotBlank(message = "La latitude est obligatoire")
     private String latitude;
     
-    @NotBlank(message = "La longitude est obligatoire")
     private String longitude;
     
     @NotNull(message = "La superficie est obligatoire")

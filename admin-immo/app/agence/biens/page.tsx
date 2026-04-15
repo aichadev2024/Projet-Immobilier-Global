@@ -78,6 +78,7 @@ interface BienImmobilier {
       whatsapp?: string;
     };
   };
+  createdById?: string;
 }
 
 interface TypeBien {
@@ -119,6 +120,7 @@ export default function BiensImmobiliers() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ id: string, role: string } | null>(null);
 
   const [newBien, setNewBien] = useState<BienRequest>({
     libelle: "",
@@ -142,9 +144,27 @@ export default function BiensImmobiliers() {
       return;
     }
 
+    fetchUserProfile(token);
     fetchBiens(token);
     fetchTypesBiens(token);
   }, [router]);
+
+  const fetchUserProfile = async (token: string) => {
+    try {
+      const response = await fetch('http://localhost:8080/api/auth/profile', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setCurrentUser({
+          id: data.id,
+          role: data.role?.nom || data.role || ""
+        });
+      }
+    } catch (error) {
+      console.error('Erreur profil:', error);
+    }
+  };
 
   const fetchBiensPublic = async () => {
     try {
@@ -251,10 +271,7 @@ export default function BiensImmobiliers() {
       return;
     }
 
-    if (!newBien.latitude || !newBien.longitude || newBien.latitude.trim() === "" || newBien.longitude.trim() === "") {
-      setError("Les coordonnées GPS sont obligatoires");
-      return;
-    }
+
 
     if (!newBien.superficie || newBien.superficie <= 0) {
       setError("La superficie doit être supérieure à 0");
@@ -286,8 +303,8 @@ export default function BiensImmobiliers() {
         idTypeBien: idTypeBienNum,
         prix: newBien.prix,
         // Convertir les coordonnées en nombres pour l'envoi au backend
-        latitude: parseFloat(newBien.latitude) || 0,
-        longitude: parseFloat(newBien.longitude) || 0
+        latitude: newBien.latitude.trim() === "" ? null : (parseFloat(newBien.latitude) || 0),
+        longitude: newBien.longitude.trim() === "" ? null : (parseFloat(newBien.longitude) || 0)
       };
       
       console.log("DEBUG Frontend - bienToSend:", bienToSend);
@@ -641,15 +658,22 @@ export default function BiensImmobiliers() {
                           <Eye className="w-4 h-4" />
                           Détails
                         </button>
-                        {isAuthenticated && (
-                          <>
-                            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
+                        {isAuthenticated && currentUser && (
+                          <div className="flex items-center gap-2">
+                            {/* Un AGENT ne peut modifier que ses propres biens. Une AGENCE peut tout modifier. */}
+                            {(currentUser.role === 'AGENCE' || (currentUser.role === 'AGENT' && bien.createdById === currentUser.id)) && (
+                              <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Modifier">
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            
+                            {/* Seule une AGENCE peut supprimer des biens */}
+                            {currentUser.role === 'AGENCE' && (
+                              <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1026,7 +1050,7 @@ export default function BiensImmobiliers() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Latitude <span className="text-red-500">*</span>
+                    Latitude <span className="text-gray-400 font-normal">(Optionnel)</span>
                   </label>
                   <input
                     type="text"
@@ -1046,7 +1070,7 @@ export default function BiensImmobiliers() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Longitude <span className="text-red-500">*</span>
+                    Longitude <span className="text-gray-400 font-normal">(Optionnel)</span>
                   </label>
                   <input
                     type="text"

@@ -136,10 +136,10 @@ export default function PendingValidationPage() {
                 Une question ? Contactez notre support
               </p>
               <a 
-                href="mailto:support@projetimmoglobal.com" 
+                href="mailto:support@bamakohome.ml" 
                 className="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-800 transition-colors"
               >
-                support@projetimmoglobal.com
+                support@bamakohome.ml
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
@@ -147,7 +147,7 @@ export default function PendingValidationPage() {
 
           {/* Footer */}
           <p className="text-center text-slate-400 text-sm mt-6">
-            Merci de votre patience et bienvenue sur Projet Immo Global !
+            Merci de votre patience et bienvenue sur BamakoHome !
           </p>
         </div>
       </main>

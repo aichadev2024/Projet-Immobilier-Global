@@ -32,7 +32,7 @@ public class BienController {
 
     // Créer un bien (pour les agences)
     @PostMapping
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
     public ResponseEntity<Map<String, Object>> createBien(@Valid @RequestBody BienRequest bienRequest, 
                                                         Authentication authentication) {
         try {
@@ -103,7 +103,7 @@ public class BienController {
 
     // Lister les biens de l'agence connectée (inclut LOUE et VENDU)
     @GetMapping("/agence")
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
     public ResponseEntity<Map<String, Object>> getMesBiens() {
         try {
             List<BienResponse> biens = bienService.listerMesBiens();
@@ -115,7 +115,7 @@ public class BienController {
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("Erreur lors de la récupération des biens agence: {}", e.getMessage());
+            log.error("Erreur lors de la récupération des biens agence: {}", e.getMessage(), e);
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Erreur: " + e.getMessage());
@@ -212,7 +212,7 @@ public class BienController {
 
     // Mettre à jour un bien
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
     public ResponseEntity<Map<String, Object>> updateBien(@PathVariable Long id, 
                                                       @Valid @RequestBody BienRequest bienRequest) {
         try {
@@ -289,6 +289,85 @@ public class BienController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Erreur lors du refus du bien: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Erreur: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // ===================== VÉRIFICATION PAR L'AGENCE =====================
+
+    // Lister les biens en attente de validation (pour l'agence)
+    @GetMapping("/en-attente-validation")
+    @PreAuthorize("hasAnyRole('AGENCE')")
+    public ResponseEntity<Map<String, Object>> getBiensEnAttenteValidation() {
+        try {
+            List<BienResponse> biens = bienService.listerBiensEnAttenteValidation();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", biens);
+            response.put("count", biens.size());
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des biens en attente: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Erreur: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // Approuver un bien (agence)
+    @PostMapping("/{id}/approuver")
+    @PreAuthorize("hasAnyRole('AGENCE')")
+    public ResponseEntity<Map<String, Object>> approuverBien(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> request) {
+        try {
+            String commentaire = request != null ? request.get("commentaire") : null;
+            bienService.approuverBien(id, commentaire);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Bien approuvé avec succès");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur lors de l'approbation du bien: {}", e.getMessage());
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Erreur: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // Rejeter un bien (agence)
+    @PostMapping("/{id}/rejeter")
+    @PreAuthorize("hasAnyRole('AGENCE')")
+    public ResponseEntity<Map<String, Object>> rejeterBien(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> request) {
+        try {
+            String commentaire = request.get("commentaire");
+            if (commentaire == null || commentaire.isBlank()) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", false);
+                response.put("message", "Un commentaire est obligatoire pour rejeter un bien");
+                return ResponseEntity.badRequest().body(response);
+            }
+            
+            bienService.rejeterBien(id, commentaire);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Bien rejeté avec succès");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur lors du rejet du bien: {}", e.getMessage());
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Erreur: " + e.getMessage());

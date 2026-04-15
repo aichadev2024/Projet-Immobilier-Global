@@ -83,12 +83,13 @@ public class AnnonceServiceImpl implements AnnonceService {
                 .transactionType(bien.getTransactionType())
                 .images(getImages(bien.getId()))
                 .agenceNom(agence != null ? agence.getNom() : "Agence inconnue")
+                .createdById(bien.getCreatedBy() != null ? bien.getCreatedBy().getId().toString() : null)
                 .build();
     }
 
     // ================= CRÉER ANNONCE =================
     @Override
-    @PreAuthorize("hasRole('AGENCE')")
+    @PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
     public AnnonceResponse creerAnnonce(AnnonceRequest request) {
 
         Utilisateur utilisateur = getUtilisateurConnecte();
@@ -99,6 +100,13 @@ public class AnnonceServiceImpl implements AnnonceService {
 
         if (!bien.getAgence().getId().equals(utilisateur.getAgence().getId())) {
             throw new SecurityException("Ce bien ne vous appartient pas");
+        }
+        
+        // Si c'est un agent, il ne peut créer d'annonce que pour ses propres biens
+        if ("AGENT".equals(utilisateur.getRole().getNom())) {
+            if (bien.getCreatedBy() == null || !bien.getCreatedBy().getId().equals(utilisateur.getId())) {
+                throw new SecurityException("Action non autorisée : Vous ne pouvez créer des annonces que pour vos propres biens");
+            }
         }
 
         Annonce annonce = Annonce.builder()

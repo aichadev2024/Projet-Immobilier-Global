@@ -34,7 +34,7 @@ export default function RegisterPage() {
   const [ninea, setNinea] = useState("");
   const [descriptionAgence, setDescriptionAgence] = useState("");
   const [visitePayante, setVisitePayante] = useState(false);
-  const [tarifVisite, setTarifVisite] = useState("");
+  const [tarifVisite, setTarifVisite] = useState(0);
 
   // États pour les documents de l'agence
   const [documents, setDocuments] = useState<{
@@ -94,8 +94,8 @@ export default function RegisterPage() {
         formData.append("ninea", ninea);
         formData.append("descriptionAgence", descriptionAgence);
         formData.append("visitePayante", visitePayante ? "true" : "false");
-        if (visitePayante && tarifVisite) {
-          formData.append("tarifVisite", tarifVisite);
+        if (visitePayante && tarifVisite > 0) {
+          formData.append("tarifVisite", tarifVisite.toString());
         }
 
         // Ajouter les documents
@@ -399,7 +399,7 @@ export default function RegisterPage() {
                           <input
                             type="number"
                             value={tarifVisite}
-                            onChange={(e) => setTarifVisite(e.target.value)}
+                            onChange={(e) => setTarifVisite(Number(e.target.value))}
                             className="w-24 px-3 py-1.5 rounded-lg border border-emerald-200 bg-white text-xs font-bold text-emerald-900 outline-none"
                             placeholder="5000"
                             min="0"

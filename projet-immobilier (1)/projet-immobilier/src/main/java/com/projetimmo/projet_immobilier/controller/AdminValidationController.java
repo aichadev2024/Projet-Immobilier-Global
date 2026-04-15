@@ -454,6 +454,10 @@ public class AdminValidationController {
                 result.put("role", utilisateur.getRole().getNom());
                 result.put("hasDocuments", hasDocuments);
                 result.put("allDocumentsApproved", allDocumentsApproved);
+                if (utilisateur.getAgence() != null) {
+                    result.put("agenceNom", utilisateur.getAgence().getNom());
+                    result.put("agenceAdresse", utilisateur.getAgence().getAdresse());
+                }
 
                 return result;
         }

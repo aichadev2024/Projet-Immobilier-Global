@@ -51,6 +51,12 @@ public interface BienRepository extends JpaRepository<Bien, Long> {
     @Query("SELECT COUNT(b) FROM Bien b WHERE b.agence.id = :agenceId AND b.statutBien = :statut")
     Long countByAgenceAndStatut(@Param("agenceId") UUID agenceId, @Param("statut") StatutBien statut);
     
+    // 🔥 Nouvelles méthodes pour filtrer par agent créateur
+    List<Bien> findByCreatedByIdAndIsDeletedFalse(UUID createdById);
+    
+    @Query("SELECT b FROM Bien b WHERE b.createdBy.id = :agentId AND b.isDeleted = false ORDER BY b.createdAt DESC")
+    List<Bien> findByAgentId(@Param("agentId") UUID agentId);
+    
     // Biens en attente de validation (pour admin)
     @Query("SELECT b FROM Bien b WHERE b.statutBien = 'EN_ATTENTE' ORDER BY b.createdAt DESC")
     List<Bien> findBiensEnAttenteValidation();
@@ -58,4 +64,7 @@ public interface BienRepository extends JpaRepository<Bien, Long> {
     // Derniers biens publiés
     @Query("SELECT b FROM Bien b WHERE b.statutBien = 'DISPONIBLE' ORDER BY b.createdAt DESC")
     List<Bien> findDerniersBiensPublies();
+    
+    // 🔒 Méthodes pour la vérification par l'agence
+    List<Bien> findByAgenceIdAndStatutBienAndIsDeletedFalse(UUID agenceId, StatutBien statutBien);
 }

@@ -196,7 +196,7 @@ export default function BiensAdmin() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-900 text-sm">{bien.prixCalculer.toLocaleString()} FCFA</div>
-                      <div className="text-xs text-slate-500 font-medium">{bien.transactionType}</div>
+                      <div className="text-xs text-slate-500 font-medium">{bien.transactionType === 'VENTE' ? 'Vente' : 'Location'}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
@@ -259,7 +259,7 @@ export default function BiensAdmin() {
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Informations</h4>
                   <div><p className="text-xs text-slate-500 mb-0.5">Description</p><p className="text-sm text-slate-800 font-medium">{selectedBien.description}</p></div>
                   <div><p className="text-xs text-slate-500 mb-0.5">Adresse</p><p className="text-sm text-slate-800 font-medium flex items-center gap-1"><MapPin className="w-3 h-3 text-indigo-500" />{selectedBien.adresse}</p></div>
-                  <div><p className="text-xs text-slate-500 mb-0.5">Transaction</p><span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">{selectedBien.transactionType}</span></div>
+                  <div><p className="text-xs text-slate-500 mb-0.5">Transaction</p><span className="px-2 py-0.5 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200">{selectedBien.transactionType === 'VENTE' ? 'Vente' : 'Location'}</span></div>
                 </div>
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Prix & Statut</h4>

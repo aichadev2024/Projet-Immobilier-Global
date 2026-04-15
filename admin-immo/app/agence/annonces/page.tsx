@@ -17,15 +17,17 @@ interface Annonce {
   datePublication: string;
   prix: number;
   image: string;
+  createdById?: string;
 }
 // Remove static mockAnnonces since we will fetch from API
 interface AnnonceResponse {
   id: number;
   typeAnnonce: string;
-  statut: "EN_LIGNE" | "PAUSE" | "EXPIREE";
+  statut: "ACTIVE" | "INACTIVE" | "EXPIREE" | "EN_LIGNE" | "PAUSE";
   libelleBien: string;
   prix: number;
   images: string[];
+  createdById?: string;
 }
 
 export default function AgenceAnnonces() {
@@ -33,9 +35,27 @@ export default function AgenceAnnonces() {
   const [filterStatut, setFilterStatut] = useState("TOUS");
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [currentUser, setCurrentUser] = useState<{ id: string, role: string } | null>(null);
   React.useEffect(() => {
     const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
+
+    const fetchUserProfile = async (token: string) => {
+      try {
+        const response = await fetch("http://localhost:8080/api/auth/profile", {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentUser({
+            id: data.id,
+            role: data.role?.nom || data.role || ""
+          });
+        }
+      } catch (error) {
+        console.error("Erreur profil:", error);
+      }
+    };
+
     const fetchAnnonces = async () => {
       try {
         const response = await fetch("http://localhost:8080/api/annonces/mes-annonces", {
@@ -46,20 +66,29 @@ export default function AgenceAnnonces() {
         if (response.ok) {
           const data: AnnonceResponse[] = await response.json();
           // Map to UI model
-          const mapped = data.map(item => ({
-            id: item.id.toString(),
-            titre: item.libelleBien || "Annonce sans titre",
-            type: item.typeAnnonce || "N/A",
-            statut: item.statut || "EN_LIGNE",
-            vues: Math.floor(Math.random() * 500) + 50, // Mock stats for now
-            clics: Math.floor(Math.random() * 100) + 10,
-            contacts: Math.floor(Math.random() * 20),
-            datePublication: new Date().toISOString(),
-            prix: item.prix || 0,
-            image: item.images && item.images.length > 0 
-              ? (item.images[0].startsWith("http") ? item.images[0] : `http://localhost:8080${item.images[0]}`)
-              : "/images/Appartement a sotuba.jpg"
-          }));
+          const mapped = data.map(item => {
+            // Mapper les statuts du backend vers le format UI
+            let mappedStatut: "EN_LIGNE" | "PAUSE" | "EXPIREE" = "EN_LIGNE";
+            if (item.statut === "ACTIVE") mappedStatut = "EN_LIGNE";
+            else if (item.statut === "INACTIVE") mappedStatut = "PAUSE";
+            else if (item.statut === "EXPIREE") mappedStatut = "EXPIREE";
+
+            return {
+              id: item.id.toString(),
+              titre: item.libelleBien || "Annonce sans titre",
+              type: item.typeAnnonce || "N/A",
+              statut: mappedStatut,
+              vues: Math.floor(Math.random() * 500) + 50, // Mock stats pour l'instant
+              clics: Math.floor(Math.random() * 100) + 10,
+              contacts: Math.floor(Math.random() * 20),
+              datePublication: new Date().toISOString(),
+              prix: item.prix || 0,
+              image: item.images && item.images.length > 0 
+                ? (item.images[0].startsWith("http") ? item.images[0] : `http://localhost:8080${item.images[0]}`)
+                : "/images/Appartement a sotuba.jpg",
+              createdById: item.createdById
+            };
+          });
           setAnnonces(mapped);
         }
       } catch (error) {
@@ -68,7 +97,11 @@ export default function AgenceAnnonces() {
         setLoading(false);
       }
     };
-    if (token) fetchAnnonces();
+
+    if (token) {
+      fetchUserProfile(token);
+      fetchAnnonces();
+    }
   }, []);
 
   const filteredAnnonces = annonces.filter(annonce => {
@@ -168,7 +201,7 @@ export default function AgenceAnnonces() {
           {filteredAnnonces.map((annonce) => (
             <div key={annonce.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-6 hover:shadow-md transition-shadow group">
               {/* Image */}
-              <div className="w-full md:w-48 h-32 rounded-xl overflow-hidden relative flex-shrink-0">
+              <div className="w-full md:w-48 h-32 rounded-xl overflow-hidden relative shrink-0">
                 <img src={annonce.image} alt={annonce.titre} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute top-2 left-2">
                   {getStatutBadge(annonce.statut)}
@@ -183,9 +216,21 @@ export default function AgenceAnnonces() {
                       <h3 className="text-lg font-bold text-slate-900">{annonce.titre}</h3>
                       <p className="text-sm text-slate-500">{annonce.type} • {formatPrice(annonce.prix)}</p>
                     </div>
-                    <button className="p-2 text-slate-400 hover:bg-slate-50 rounded-lg transition-colors">
-                      <MoreVertical className="w-5 h-5" />
-                    </button>
+                    {currentUser && (
+                      <div className="flex gap-1">
+                        {(currentUser.role === 'AGENCE' || (currentUser.role === 'AGENT' && annonce.createdById === currentUser.id)) && (
+                          <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Modifier">
+                            <MoreVertical className="w-5 h-5" />
+                          </button>
+                        )}
+                        {/* Seule une AGENCE peut supprimer/arrêter une annonce */}
+                        {currentUser.role === 'AGENCE' && (
+                          <button className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors" title="Supprimer">
+                            <ExternalLink className="w-5 h-5 rotate-45" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

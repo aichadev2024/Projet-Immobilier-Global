@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { 
   MapPin, Bed, Bath, Square, Calendar, 
   ChevronLeft, Share2, Heart, ShieldCheck, 
-  Phone, Mail, ArrowRight, CheckCircle2 
+  Phone, Mail, ArrowRight, CheckCircle2, AlertCircle 
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -242,11 +242,34 @@ export default function AnnonceDetails() {
                 </div>
 
                 <div className="space-y-4 mb-8">
+                  {bien.utilisateur?.agence?.visitePayante ? (
+                     <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-xl border-2 border-amber-200">
+                       <AlertCircle size={24} className="text-amber-600 mt-0.5 flex-shrink-0" />
+                       <div className="flex-1">
+                         <p className="text-sm font-bold text-amber-900">Visite payante</p>
+                         <p className="text-sm font-medium text-amber-700 mt-1">
+                           Frais de visite: <span className="font-black">{bien.utilisateur.agence.tarifVisite?.toLocaleString()} FCFA</span>
+                         </p>
+                         <p className="text-xs text-amber-600 mt-1">À prévoir lors de la visite sur place</p>
+                       </div>
+                     </div>
+                  ) : (
+                     <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl border-2 border-emerald-200">
+                       <CheckCircle2 size={24} className="text-emerald-600 mt-0.5 flex-shrink-0" />
+                       <div className="flex-1">
+                         <p className="text-sm font-bold text-emerald-900">Visite gratuite</p>
+                         <p className="text-sm font-medium text-emerald-700 mt-1">
+                           Aucuns frais de visite requis
+                         </p>
+                         <p className="text-xs text-emerald-600 mt-1">Profitez d'une visite sans engagement</p>
+                       </div>
+                     </div>
+                  )}
                   <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-100">
                     <ShieldCheck size={24} className="text-indigo-600" />
                     <div>
-                      <p className="text-sm font-bold text-slate-900">Paiement sécurisé</p>
-                      <p className="text-xs font-medium text-slate-500">Transactions vérifiées par Immo Global</p>
+                      <p className="text-sm font-bold text-slate-900">Contact sécurisé</p>
+                      <p className="text-xs font-medium text-slate-500">Agences vérifiées par Immo Global</p>
                     </div>
                   </div>
                 </div>
@@ -262,11 +285,20 @@ export default function AnnonceDetails() {
 
               {/* Info Agence */}
               <div className="bg-white rounded-[2rem] p-8 border border-slate-100 shadow-sm flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-slate-100 rounded-full mb-4 overflow-hidden border-4 border-white shadow-md">
-                  <img src="https://ui-avatars.com/api/?name=Agence+Immo&background=4f46e5&color=fff" alt="Logo Agence" className="w-full h-full object-cover" />
+                <div className="w-20 h-20 bg-indigo-50 rounded-full mb-4 overflow-hidden border-4 border-white shadow-md flex items-center justify-center text-indigo-600 font-black text-3xl">
+                  {bien.utilisateur?.nom?.[0] || 'A'}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1">Agence Immobilière</h3>
-                <p className="text-sm font-medium text-slate-500 mb-6">Partenaire vérifié</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-1">{bien.utilisateur?.nom || "Agence Immobilière"}</h3>
+                
+                {bien.createdByNom ? (
+                  <p className="text-[10px] font-black text-indigo-600 mb-6 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-full">
+                     Publié par {bien.createdByPrenom} {bien.createdByNom}
+                  </p>
+                ) : (
+                  <p className="text-[10px] font-black text-indigo-600 mb-6 uppercase tracking-widest bg-indigo-50 px-3 py-1.5 rounded-full">
+                     Partenaire vérifié
+                  </p>
+                )}
                 
                 <div className="w-full flex gap-3">
                   <button onClick={handleContactClick} className="flex-1 py-3 px-4 rounded-xl border-2 border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 text-slate-700 font-bold">

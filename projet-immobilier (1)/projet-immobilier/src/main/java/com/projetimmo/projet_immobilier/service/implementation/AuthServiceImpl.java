@@ -211,6 +211,12 @@ public class AuthServiceImpl implements AuthService {
                         throw new RuntimeException("Agence non créée lors de l'inscription");
                 }
 
+                // 🛡️ SÉCURITÉ : Si c'est un utilisateur simple (pas d'agence), on arrête ici le traitement des documents
+                if (agence == null) {
+                        log.info("ℹ️ Inscription d'un utilisateur simple : aucune agence associée, les documents seront ignorés.");
+                        return;
+                }
+
                 // 📁 Étape 3: Créer le répertoire de stockage si nécessaire
                 Path uploadPath = Paths.get(uploadDir, "agences", agence.getId().toString());
                 try {

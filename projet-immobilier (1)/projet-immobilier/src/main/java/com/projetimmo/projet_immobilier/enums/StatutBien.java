@@ -8,5 +8,9 @@ public enum StatutBien {
     INDISPONIBLE,
     EN_ATTENTE,
     VALIDE,
-    REFUSE
+    REFUSE,
+    // 🔒 Statuts de vérification par l'agence
+    EN_ATTENTE_VALIDATION,  // En attente de vérification par l'agence
+    APPROUVE,               // Validé et publié par l'agence
+    REJETE                  // Refusé par l'agence
 }

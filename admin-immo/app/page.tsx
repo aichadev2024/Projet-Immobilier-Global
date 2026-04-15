@@ -52,22 +52,9 @@ export default function Home() {
 
   // 🕵️ Logique de Filtrage Hautement Robuste
   const constFilteredBiens = useMemo(() => {
-    console.log("=== FILTRAGE ===");
-    console.log("Biens totals:", biens.length);
-    console.log("Filtre typeTransaction:", typeTransaction);
-    console.log("Filtre typeBien:", typeBien);
-    console.log("Filtre ville:", ville);
-    
+        
     return biens.filter((bien) => {
-      // Debug: afficher les valeurs du bien
-      if (biens.length <= 10) {
-        console.log(`Bien ${bien.id}:`, {
-          libelleTypeBien: bien.libelleTypeBien,
-          typeTransaction: bien.typeTransaction,
-          ville: bien.ville
-        });
-      }
-      
+            
       // 1. Recherche Textuelle (Multi-champs)
       const searchTerm = search.trim().toLowerCase();
       const matchSearch = !searchTerm || 
@@ -90,10 +77,6 @@ export default function Home() {
         bienTransaction === typeTransaction;
       
       const match = matchSearch && matchVille && matchType && matchTransaction;
-      
-      if (!match && typeTransaction !== "TOUS" && biens.length <= 10) {
-        console.log(`  -> REJETÉ: typeTransaction="${bienTransaction}" vs filtre="${typeTransaction}"`);
-      }
         
       return match;
     });
@@ -102,7 +85,8 @@ export default function Home() {
   // Pagination
   const totalPages = Math.ceil(constFilteredBiens.length / itemsPerPage);
   const currentBiens = constFilteredBiens.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
+  
+  
   const uniqueTypes = [...new Set(biens.map(b => b.libelleTypeBien).filter(Boolean))];
 
   // 🔒 Gestion des actions protégées avec vérification d'expiration
@@ -110,7 +94,6 @@ export default function Home() {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     
     if (!token || token === "null" || token === "undefined") {
-      console.log("🔐 checkAuth - Token absent");
       setIsAuthenticated(false);
       return false;
     }
@@ -319,16 +302,18 @@ export default function Home() {
           {!loading && currentBiens.length > 0 ? (
             <AnimatePresence mode="popLayout">
               <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                {currentBiens.map((bien, i) => (
-                  <PropertyCardWithActions 
-                    key={bien.id} 
-                    bien={bien} 
-                    index={i} 
-                    onContact={() => handleContactClick(bien)}
-                    onReserve={() => handleReservationClick(bien)}
-                    isAuthenticated={isAuthenticated}
-                  />
-                ))}
+                {currentBiens.map((bien, i) => {
+                  return (
+                    <PropertyCardWithActions 
+                      key={bien.id} 
+                      bien={bien} 
+                      index={i} 
+                      onContact={() => handleContactClick(bien)}
+                      onReserve={() => handleReservationClick(bien)}
+                      isAuthenticated={isAuthenticated}
+                    />
+                  );
+                })}
               </motion.div>
             </AnimatePresence>
           ) : !loading && constFilteredBiens.length === 0 && (
@@ -450,6 +435,13 @@ function PropertyCardWithActions({
   onReserve: () => void;
   isAuthenticated: boolean;
 }) {
+  console.log(`=== CARTE BIEN ${bien.id} ===`, {
+    id: bien.id,
+    libelle: bien.libelle,
+    utilisateur: bien.utilisateur,
+    agenceData: bien.utilisateur?.agence
+  });
+  
   const imageUrl = bien.images?.[0] ? 
     (bien.images[0].startsWith("http") ? bien.images[0] : `http://localhost:8080${bien.images[0]}`) 
     : "/images/maison bamako.webp";
@@ -535,19 +527,7 @@ function PropertyCardWithActions({
               {new Intl.NumberFormat("fr-FR").format(price)}
               <span className="text-xs font-bold ml-1 text-slate-400">FCFA</span>
             </div>
-            {/* Indicateur visite payante/gratuite */}
-            {bien.utilisateur?.agence?.visitePayante ? (
-              <div className="flex items-center gap-1 mt-1 text-amber-600">
-                <AlertCircle size={12} />
-                <span className="text-[10px] font-bold">Visite payante: {bien.utilisateur.agence.tarifVisite?.toLocaleString()} FCFA</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1 mt-1 text-emerald-600">
-                <CheckCircle2 size={12} />
-                <span className="text-[10px] font-bold">Visite gratuite</span>
-              </div>
-            )}
-          </div>
+                      </div>
 
           {/* Boutons d'action protégés */}
           <div className="space-y-2 mt-auto">
@@ -645,6 +625,14 @@ function ReservationModal({
 }) {
   const [dateDebut, setDateDebut] = useState("");
   const [dateFin, setDateFin] = useState("");
+
+  console.log("*** MODAL RÉSERVATION - BIEN DATA:", {
+    bienId: bien.id,
+    agenceData: bien.utilisateur?.agence,
+    visitePayante: bien.utilisateur?.agence?.visitePayante,
+    tarifVisite: bien.utilisateur?.agence?.tarifVisite,
+    tarifType: typeof bien.utilisateur?.agence?.tarifVisite
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

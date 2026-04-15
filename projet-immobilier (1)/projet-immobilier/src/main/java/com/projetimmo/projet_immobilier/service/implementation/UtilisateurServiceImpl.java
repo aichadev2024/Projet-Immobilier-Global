@@ -127,6 +127,11 @@ public class UtilisateurServiceImpl implements UtilisateurService {
     }
 
     @Override
+    public List<Utilisateur> listerClientsAgence(UUID agenceId) {
+        return utilisateurRepository.findClientsByAgenceId(Objects.requireNonNull(agenceId));
+    }
+
+    @Override
     public void changerMotDePasse(String nomUtilisateur, String currentPassword, String newPassword) {
         Utilisateur utilisateur = getUtilisateurParNomUtilisateur(nomUtilisateur);
         

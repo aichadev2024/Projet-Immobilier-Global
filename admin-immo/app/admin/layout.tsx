@@ -53,8 +53,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       setLoading(false);
       return;
     }
-    fetchUserProfile();
-  }, [pathname]);
+    // Ne charger le profil qu'une seule fois au montage (pas à chaque changement de page)
+    // pour éviter les boucles infinies
+    if (!user) {
+      fetchUserProfile();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchUserProfile = async () => {
     try {
@@ -76,13 +81,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-      } else {
-        console.error("Erreur lors du chargement du profil");
+        // Stocker pour usage hors ligne
+        localStorage.setItem("user", JSON.stringify(userData));
+      } else if (response.status === 401) {
+        // Token invalide - déconnexion propre
+        console.log("Session expirée, redirection vers login");
+        localStorage.removeItem("accessToken");
+        sessionStorage.removeItem("accessToken");
+        localStorage.removeItem("user");
         router.push("/login");
+        return;
+      } else {
+        console.error("Erreur lors du chargement du profil:", response.status);
       }
     } catch (error) {
       console.error("Erreur lors de la connexion au backend:", error);
-      // En cas d'erreur, on essaie de charger depuis le localStorage
+      // En cas d'erreur réseau, on essaie de charger depuis le localStorage
       const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
       if (storedUser) {
         setUser(JSON.parse(storedUser));
@@ -94,10 +108,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navigation = [
     {
-      name: "Dashboard",
-      href: "/admin/dashboard",
+      name: "Tableau de bord",
+      href: "/admin/tableau-de-bord",
       icon: LayoutDashboard,
-      current: pathname === "/admin/dashboard"
+      current: pathname === "/admin/tableau-de-bord"
     },
     {
       name: "Utilisateurs",
@@ -136,7 +150,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       current: pathname === "/admin/admins"
     },
     {
-      name: "Profile",
+      name: "Profil",
       href: "/admin/profile",
       icon: User,
       current: pathname === "/admin/profile"
@@ -155,16 +169,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   ];
 
-  const handleLogout = () => {
-    console.log("🔴 Déconnexion admin...");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("user");
-    setUser(null);
-    console.log("✅ Tokens supprimés, redirection vers /login");
-    router.push("/login");
-  };
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('user')
+    sessionStorage.removeItem('accessToken')
+    sessionStorage.removeItem('user')
+    setUser(null)
+    router.push('/login')
+  }
 
   if (loading && !isPublicRoute) {
     return (
@@ -212,7 +228,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <Shield className="w-5 h-5 text-indigo-400" />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-white tracking-tight">Admin Panel</h2>
+                <h2 className="text-lg font-bold text-white tracking-tight">Panneau Admin</h2>
                 <p className="text-xs text-slate-400 font-medium">Gestion Globale</p>
               </div>
             </div>
@@ -262,8 +278,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Shield className="w-6 h-6 text-indigo-400" />
             </div>
             <div className="ml-4">
-              <h2 className="text-lg font-bold text-white tracking-tight">Espace Admin</h2>
-              <p className="text-xs text-indigo-300/80 font-medium">BamakoHome</p>
+              <h2 className="text-lg font-bold text-white tracking-tight">Panneau Admin</h2>
+              <p className="text-xs text-indigo-300/80 font-medium tracking-wide">BamakoHome</p>
             </div>
           </div>
           <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
@@ -328,10 +344,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               <div className="hidden md:flex items-center text-sm font-medium text-slate-500">
                 <Shield className="w-4 h-4 mr-2 text-slate-400" />
-                <span>Espace Admin</span>
+                <span>Espace Administration</span>
                 <span className="mx-2 text-slate-300">/</span>
                 <span className="text-slate-900 capitalize flex items-center">
-                  {navigation.find(n => n.current)?.name || "Dashboard"}
+                  {navigation.find(n => n.current)?.name || "Tableau de bord"}
                 </span>
               </div>
             </div>

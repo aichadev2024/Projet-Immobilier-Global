@@ -24,6 +24,7 @@ import com.projetimmo.projet_immobilier.entity.Media;
 import lombok.RequiredArgsConstructor;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 import java.util.Objects;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,9 +59,15 @@ public class BienServiceImpl implements BienService {
                 .findByNomUtilisateur(authentication.getName())
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-        if (!"AGENCE"
-                .equals(utilisateur.getRole().getNom())) {
-            throw new RuntimeException("Seul une agence peut créer un bien");
+        // Vérifier que c'est une agence ou un agent
+        String role = utilisateur.getRole().getNom();
+        if (!"AGENCE".equals(role) && !"AGENT".equals(role)) {
+            throw new RuntimeException("Seul une agence ou un agent peut accéder aux biens");
+        }
+
+        // Vérifier que l'utilisateur a une agence associée
+        if (utilisateur.getAgence() == null) {
+            throw new RuntimeException("Vous n'êtes pas associé à une agence. Contactez votre administrateur.");
         }
 
         return utilisateur.getAgence();
@@ -71,7 +78,7 @@ public class BienServiceImpl implements BienService {
         if (prix == null || prix.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Le prix doit être supérieur à 0");
         }
-        
+
         switch (typeBien.getModeTarification()) {
             case FIXE:
                 // Commission fixe (montant fixe en FCFA)
@@ -80,7 +87,8 @@ public class BienServiceImpl implements BienService {
             case POURCENTAGE:
                 // Commission en pourcentage du prix (tarifBase = %)
                 // Ex: tarifBase = 2.5, prix = 1000000 → commission = 25000
-                return prix.multiply(typeBien.getTarifBase()).divide(new BigDecimal("100"), 2, java.math.RoundingMode.HALF_UP);
+                return prix.multiply(typeBien.getTarifBase()).divide(new BigDecimal("100"), 2,
+                        java.math.RoundingMode.HALF_UP);
 
             case GRATUIT:
                 return BigDecimal.ZERO;
@@ -109,14 +117,19 @@ public class BienServiceImpl implements BienService {
                 .datePublication(null)
                 .images(getImages(bien.getId()))
                 .utilisateur(mapToAgenceInfo(bien.getAgence()))
+                .createdById(bien.getCreatedBy() != null ? bien.getCreatedBy().getId().toString() : null)
+                .createdByNom(bien.getCreatedBy() != null ? bien.getCreatedBy().getNom() : null)
+                .createdByPrenom(bien.getCreatedBy() != null ? bien.getCreatedBy().getPrenom() : null)
+                .commentaireVerification(bien.getCommentaireVerification())
                 .caracteristiques(mapToCaracteristiquesInfo(bien.getCaracteristiques()))
                 .superficie(bien.getSuperficie())
                 .build();
     }
-    
+
     private BienResponse.CaracteristiquesInfo mapToCaracteristiquesInfo(CaracteristiquesBien carac) {
-        if (carac == null) return null;
-        
+        if (carac == null)
+            return null;
+
         return BienResponse.CaracteristiquesInfo.builder()
                 .superficie(carac.getSuperficie())
                 .nbChambres(carac.getNbChambres())
@@ -132,19 +145,19 @@ public class BienServiceImpl implements BienService {
                 .securite(carac.getGardien())
                 .build();
     }
-    
+
     // ===================== DÉTAILS COMPLETS AVEC MÉDIAS =====================
     @Override
     @Transactional(readOnly = true)
     public BienResponse getBienDetailsWithMedias(Long idBien) {
         Bien bien = bienRepository.findById(idBien)
                 .orElseThrow(() -> new RuntimeException("Bien non trouvé"));
-                
+
         // Force le chargement des caractéristiques
         if (bien.getCaracteristiques() != null) {
             bien.getCaracteristiques().getSuperficie();
         }
-        
+
         return mapToResponse(bien);
     }
 
@@ -200,19 +213,30 @@ public class BienServiceImpl implements BienService {
         // une entité sans typeBien (sinon SQL constraint error).
         boolean isAgenceVerifiee = agence.getStatut() == com.projetimmo.projet_immobilier.enums.StatutAgence.VERIFIEE;
 
+        // Récupérer l'utilisateur connecté pour le champ createdBy
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Utilisateur utilisateurConnecte = utilisateurRepository
+                .findByNomUtilisateur(authentication.getName())
+                .orElse(null);
+
         Bien bien = Bien.builder()
                 .libelle(request.getLibelle())
                 .description(request.getDescription())
                 .adresse(request.getAdresse())
-                .latitude(request.getLatitude() != null ? Double.valueOf(request.getLatitude()) : null)
-                .longitude(request.getLongitude() != null ? Double.valueOf(request.getLongitude()) : null)
+                .latitude(request.getLatitude() != null && !request.getLatitude().isBlank()
+                        ? Double.valueOf(request.getLatitude())
+                        : null)
+                .longitude(request.getLongitude() != null && !request.getLongitude().isBlank()
+                        ? Double.valueOf(request.getLongitude())
+                        : null)
                 .superficie(request.getSuperficie())
                 .prix(request.getPrix())
                 .commission(commission)
                 .prixCalculer(request.getPrix().add(commission))
-                .statutBien(isAgenceVerifiee ? StatutBien.DISPONIBLE : StatutBien.EN_ATTENTE)
+                .statutBien(StatutBien.DISPONIBLE) // 🆕 Les biens sont directement disponibles
                 .transactionType(request.getTransactionType())
                 .agence(agence)
+                .createdBy(utilisateurConnecte)
                 .build();
 
         // Sécurité: s'assurer que la relation est bien présente avant persist.
@@ -222,8 +246,8 @@ public class BienServiceImpl implements BienService {
 
         // Si l'agence est vérifiée, on crée l'annonce tout de suite
         if (isAgenceVerifiee) {
-            TypeAnnonce typeAnnonce = bien.getTransactionType() == TransactionType.A_VENDRE 
-                    ? TypeAnnonce.VENTE 
+            TypeAnnonce typeAnnonce = bien.getTransactionType() == TransactionType.A_VENDRE
+                    ? TypeAnnonce.VENTE
                     : TypeAnnonce.LOCATION;
 
             Annonce annonce = Annonce.builder()
@@ -243,7 +267,9 @@ public class BienServiceImpl implements BienService {
 
     // ===================== MES BIENS =====================
     @Override
+    @Transactional(readOnly = true)
     public List<BienResponse> listerMesBiens() {
+        // Pour agences et agents : voir TOUS les biens de leur agence
         Agence agence = getAgenceConnecte();
         return bienRepository.findByAgenceIdAndIsDeletedFalse(agence.getId())
                 .stream()
@@ -252,17 +278,19 @@ public class BienServiceImpl implements BienService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BienResponse> listerBiens() {
         return bienRepository.findByIsDeletedFalse()
                 .stream()
-                .filter(bien -> !bien.getStatutBien().equals(StatutBien.LOUE) && 
-                               !bien.getStatutBien().equals(StatutBien.VENDU) &&
-                               !bien.getStatutBien().equals(StatutBien.INDISPONIBLE))
+                .filter(bien -> !bien.getStatutBien().equals(StatutBien.LOUE) &&
+                        !bien.getStatutBien().equals(StatutBien.VENDU) &&
+                        !bien.getStatutBien().equals(StatutBien.INDISPONIBLE))
                 .map(this::mapToResponse)
                 .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BienResponse> listerTousBiens() {
         // Pour admin - retourne tous les biens non supprimés, incluant LOUE et VENDU
         return bienRepository.findByIsDeletedFalse()
@@ -286,16 +314,38 @@ public class BienServiceImpl implements BienService {
         Bien bien = bienRepository.findById(Objects.requireNonNull(idBien))
                 .orElseThrow(() -> new RuntimeException("Bien introuvable"));
 
-        if (!bien.getAgence().getId().equals(agence.getId())) {
-            throw new RuntimeException("Action non autorisée");
+        // Vérifier les permissions
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Utilisateur utilisateur = utilisateurRepository
+                .findByNomUtilisateur(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        String role = utilisateur.getRole().getNom();
+        boolean isOwnerAgencies = bien.getAgence().getId().equals(agence.getId());
+
+        if (!isOwnerAgencies) {
+            throw new RuntimeException("Action non autorisée : Ce bien n'appartient pas à votre agence");
         }
+
+        // Si c'est un agent, il ne peut modifier que ses propres biens
+        if ("AGENT".equals(role)) {
+            if (bien.getCreatedBy() == null || !bien.getCreatedBy().getId().equals(utilisateur.getId())) {
+                throw new RuntimeException("Action non autorisée : Vous ne pouvez modifier que vos propres biens");
+            }
+        }
+        // Le rôle 'AGENCE' a naturellement accès à tout ce qui appartient à l'agence
+        // (déjà vérifié par isOwnerAgencies)
 
         // Mise à jour des champs
         bien.setLibelle(request.getLibelle());
         bien.setDescription(request.getDescription());
         bien.setAdresse(request.getAdresse());
-        bien.setLatitude(request.getLatitude() != null ? Double.valueOf(request.getLatitude()) : null);
-        bien.setLongitude(request.getLongitude() != null ? Double.valueOf(request.getLongitude()) : null);
+        bien.setLatitude(request.getLatitude() != null && !request.getLatitude().isBlank()
+                ? Double.valueOf(request.getLatitude())
+                : null);
+        bien.setLongitude(request.getLongitude() != null && !request.getLongitude().isBlank()
+                ? Double.valueOf(request.getLongitude())
+                : null);
         bien.setSuperficie(request.getSuperficie());
         bien.setTransactionType(request.getTransactionType());
 
@@ -326,8 +376,19 @@ public class BienServiceImpl implements BienService {
         Bien bien = bienRepository.findById(Objects.requireNonNull(idBien))
                 .orElseThrow(() -> new RuntimeException("Bien introuvable"));
 
+        // Demande explicite: seul le rôle AGENCE peut supprimer
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Utilisateur utilisateur = utilisateurRepository
+                .findByNomUtilisateur(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        if (!"AGENCE".equals(utilisateur.getRole().getNom())) {
+            throw new RuntimeException(
+                    "Action non autorisée : Seul le compte principal de l'agence peut supprimer un bien");
+        }
+
         if (!bien.getAgence().getId().equals(agence.getId())) {
-            throw new RuntimeException("Action non autorisée");
+            throw new RuntimeException("Action non autorisée : Ce bien n'appartient pas à votre agence");
         }
 
         bien.setIsDeleted(true);
@@ -346,9 +407,9 @@ public class BienServiceImpl implements BienService {
     public List<BienResponse> getBiensByTransactionType(TransactionType type) {
         return bienRepository.findByTransactionTypeAndIsDeletedFalse(type)
                 .stream()
-                .filter(bien -> !bien.getStatutBien().equals(StatutBien.LOUE) && 
-                               !bien.getStatutBien().equals(StatutBien.VENDU) &&
-                               !bien.getStatutBien().equals(StatutBien.INDISPONIBLE))
+                .filter(bien -> !bien.getStatutBien().equals(StatutBien.LOUE) &&
+                        !bien.getStatutBien().equals(StatutBien.VENDU) &&
+                        !bien.getStatutBien().equals(StatutBien.INDISPONIBLE))
                 .map(this::mapToResponse)
                 .toList();
     }
@@ -368,8 +429,8 @@ public class BienServiceImpl implements BienService {
         bienRepository.save(bien);
 
         // Convertir TransactionType en TypeAnnonce
-        TypeAnnonce typeAnnonce = bien.getTransactionType() == TransactionType.A_VENDRE 
-                ? TypeAnnonce.VENTE 
+        TypeAnnonce typeAnnonce = bien.getTransactionType() == TransactionType.A_VENDRE
+                ? TypeAnnonce.VENTE
                 : TypeAnnonce.LOCATION;
 
         // Créer automatiquement une annonce active
@@ -383,12 +444,70 @@ public class BienServiceImpl implements BienService {
         annonceRepository.save(annonce);
 
         // Notifier tous les utilisateurs du nouveau bien disponible
-        notificationService.notifierNouveauBien(bien);
 
-        System.out.println("✅ Annonce automatique créée pour le bien ID: " + bien.getId());
+        System.out.println("✅ Bien approuvé par l'agence ID: " + bien.getId());
+    }
+
+    // ===================== VÉRIFICATION PAR L'AGENCE =====================
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BienResponse> listerBiensEnAttenteValidation() {
+        Agence agence = getAgenceConnecte();
+        return bienRepository
+                .findByAgenceIdAndStatutBienAndIsDeletedFalse(agence.getId(), StatutBien.EN_ATTENTE_VALIDATION)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override
+    @Transactional
+    public void approuverBien(Long id, String commentaire) {
+        Bien bien = bienRepository.findById(Objects.requireNonNull(id))
+                .orElseThrow(() -> new RuntimeException("Bien non trouvé"));
+
+        Agence agence = getAgenceConnecte();
+        if (!bien.getAgence().getId().equals(agence.getId())) {
+            throw new RuntimeException("Action non autorisée : Ce bien n'appartient pas à votre agence");
+        }
+
+        if (bien.getStatutBien() != StatutBien.EN_ATTENTE_VALIDATION) {
+            throw new RuntimeException("Seuls les biens en attente de validation peuvent être approuvés");
+        }
+
+        bien.setStatutBien(StatutBien.APPROUVE);
+        if (commentaire != null && !commentaire.isBlank()) {
+            bien.setCommentaireVerification(commentaire);
+        }
+        bienRepository.save(bien);
+
+        TypeAnnonce typeAnnonce = bien.getTransactionType() == TransactionType.A_VENDRE
+                ? TypeAnnonce.VENTE
+                : TypeAnnonce.LOCATION;
+
+        Annonce annonce = Annonce.builder()
+                .typeAnnonce(typeAnnonce)
+                .statut(StatutAnnonce.ACTIVE)
+                .bien(bien)
+                .isDeleted(false)
+                .build();
+
+        annonceRepository.save(annonce);
+
+        if (bien.getCreatedBy() != null) {
+            notificationService.createNotification(
+                    UUID.fromString(bien.getCreatedBy().getId().toString()),
+                    "Votre bien \"" + bien.getLibelle() + "\" a été approuvé",
+                    "VERIFICATION",
+                    bien.getId().toString());
+        }
+
+        System.out.println("✅ Bien approuvé par l'agence ID: " + bien.getId());
+    }
+
+    @Override
+    @Transactional
     public void refuserBien(Long id) {
         Bien bien = bienRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(() -> new RuntimeException("Bien non trouvé"));
@@ -399,5 +518,37 @@ public class BienServiceImpl implements BienService {
 
         bien.setStatutBien(StatutBien.REFUSE);
         bienRepository.save(bien);
+
+        System.out.println("❌ Bien refusé ID: " + bien.getId());
+    }
+
+    @Override
+    @Transactional
+    public void rejeterBien(Long id, String commentaire) {
+        Bien bien = bienRepository.findById(Objects.requireNonNull(id))
+                .orElseThrow(() -> new RuntimeException("Bien non trouvé"));
+
+        Agence agence = getAgenceConnecte();
+        if (!bien.getAgence().getId().equals(agence.getId())) {
+            throw new RuntimeException("Action non autorisée : Ce bien n'appartient pas à votre agence");
+        }
+
+        if (bien.getStatutBien() != StatutBien.EN_ATTENTE_VALIDATION) {
+            throw new RuntimeException("Seuls les biens en attente de validation peuvent être rejetés");
+        }
+
+        bien.setStatutBien(StatutBien.REJETE);
+        bien.setCommentaireVerification(commentaire != null ? commentaire : "Aucun commentaire fourni");
+        bienRepository.save(bien);
+
+        if (bien.getCreatedBy() != null) {
+            notificationService.createNotification(
+                    UUID.fromString(bien.getCreatedBy().getId().toString()),
+                    "Votre bien \"" + bien.getLibelle() + "\" a été rejeté. Motif: " + commentaire,
+                    "VERIFICATION",
+                    bien.getId().toString());
+        }
+
+        System.out.println("❌ Bien rejeté par l'agence ID: " + bien.getId() + " - Commentaire: " + commentaire);
     }
 }

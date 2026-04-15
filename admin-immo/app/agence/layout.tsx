@@ -18,7 +18,8 @@ import {
   LogOut,
   Menu,
   X,
-  Image
+  Image,
+  ShieldCheck
 } from "lucide-react";
 
 import NotificationBell from "@/components/NotificationBell";
@@ -26,6 +27,7 @@ import NotificationBell from "@/components/NotificationBell";
 export default function AgenceLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [user, setUser] = useState<{ nom: string; prenom: string; email: string; role: string; nomAgence?: string } | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -59,6 +61,8 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
         const data = await res.json();
         console.log("👤 User data received:", data);
         setUser(data);
+        // Store user role for filtering navigation
+        setUserRole(data.role || localStorage.getItem("role") || sessionStorage.getItem("role"));
       } catch (error) {
         // Only log real errors, not auth redirects
         if (error instanceof Error && !error.message.includes("redirect")) {
@@ -77,24 +81,35 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
     fetchProfile();
   }, [router]);
 
-  const navigation = [
+  // Filter navigation based on user role - AGENT cannot see Agents menu
+  const allNavigation = [
     {
       name: "Tableau de bord",
-      href: "/agence/dashboard",
+      href: "/agence/tableau-de-bord",
       icon: BarChart3,
-      current: pathname === "/agence/dashboard"
+      current: pathname === "/agence/tableau-de-bord",
+      allowedRoles: ["AGENCE", "AGENT"]
     },
     {
       name: "Profil agence",
       href: "/agence/profil",
       icon: Building2,
-      current: pathname === "/agence/profil"
+      current: pathname === "/agence/profil",
+      allowedRoles: ["AGENCE", "AGENT"]
     },
     {
       name: "Agents",
       href: "/agence/agents",
       icon: Users,
-      current: pathname === "/agence/agents"
+      current: pathname === "/agence/agents",
+      allowedRoles: ["AGENCE"] // Only AGENCE can see Agents
+    },
+    {
+      name: "Vérifications",
+      href: "/agence/verifications",
+      icon: ShieldCheck,
+      current: pathname === "/agence/verifications",
+      allowedRoles: ["AGENCE"] // Only AGENCE can verify biens
     },
     {
       name: "Biens immobiliers",
@@ -158,17 +173,27 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
     }
   ];
 
-  const handleLogout = () => {
-    console.log("🔴 Déconnexion agence...");
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("user");
-    localStorage.removeItem("role");
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("user");
-    sessionStorage.removeItem("role");
-    console.log("✅ Tokens supprimés, redirection vers /login");
-    router.push("/login");
-  };
+  // Filter navigation based on user role
+  const navigation = allNavigation.filter(item => {
+    // If no allowedRoles specified, show to everyone
+    if (!item.allowedRoles) return true;
+    // Check if current user role is allowed
+    return item.allowedRoles.includes(userRole || "");
+  });
+
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation()
+      e.preventDefault()
+    }
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('user')
+    localStorage.removeItem('role')
+    sessionStorage.removeItem('accessToken')
+    sessionStorage.removeItem('user')
+    sessionStorage.removeItem('role')
+    router.push('/login')
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">

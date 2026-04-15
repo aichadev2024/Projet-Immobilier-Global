@@ -80,6 +80,8 @@ server:
 brevo:
   api-key:  ${BREVO_API_KEY}
   url: https://api.brevo.com/v3/smtp/email
+  sender-email: ${BREVO_SENDER_EMAIL:diarrassoubaa505@gmail.com}
+  sender-name: ${BREVO_SENDER_NAME:Projet Immobilier}
   sms:
     enabled: ${BREVO_SMS_ENABLED:true}
     sender: ${BREVO_SMS_SENDER:ProjetImmo}
@@ -92,6 +94,8 @@ cors:
 app:
   frontend:
     url: ${FRONTEND_URL:http://localhost:3000}
+  backend:
+    url: ${BACKEND_URL:http://localhost:8080}
   security:
     require-https: ${REQUIRE_HTTPS:false}
     max-login-attempts: 5

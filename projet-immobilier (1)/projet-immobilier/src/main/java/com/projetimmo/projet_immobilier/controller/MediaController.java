@@ -33,6 +33,7 @@ public class MediaController {
     private final MediaService mediaService;
     private final MediaRepository mediaRepository;
     private final UtilisateurRepository utilisateurRepository;
+    private final com.projetimmo.projet_immobilier.repository.BienRepository bienRepository;
 
     // 🔹 Ajouter via DTO
     @PostMapping
@@ -63,6 +64,20 @@ public class MediaController {
             Agence agence = utilisateur.getAgence();
             if (agence == null) {
                 throw new RuntimeException("Agence non trouvée pour l'utilisateur");
+            }
+
+            // Vérifier les permissions pour l'upload
+            com.projetimmo.projet_immobilier.entity.Bien bien = bienRepository.findById(bienId)
+                .orElseThrow(() -> new RuntimeException("Bien non trouvé"));
+
+            if (!bien.getAgence().getId().equals(agence.getId())) {
+                throw new RuntimeException("Action non autorisée : Le bien n'appartient pas à votre agence");
+            }
+
+            if ("AGENT".equals(utilisateur.getRole().getNom())) {
+                if (bien.getCreatedBy() == null || !bien.getCreatedBy().getId().equals(utilisateur.getId())) {
+                    throw new RuntimeException("Action non autorisée : Vous ne pouvez ajouter des médias qu'à vos propres biens");
+                }
             }
 
             if (files.length == 0) {

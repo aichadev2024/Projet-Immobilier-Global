@@ -14,6 +14,8 @@ public interface UtilisateurService {
 
     Utilisateur supprimerUtilisateur(UUID id);
 
+    List<Utilisateur> listerClientsAgence(UUID agenceId);
+
     Utilisateur mettreAJourUtilisateur(UUID id, Utilisateur utilisateur);
 
     List<UtilisateurResponse> listerUtilisateurs();

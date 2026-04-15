@@ -32,13 +32,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface Notification {
   id: number
-  type: 'NEW_BIEN' | 'RESERVATION_VALIDATED' | 'CONTACT_RESPONSE' | 'RESERVATION_CREATED' | 'RESERVATION_CANCELLED'
+  type: string
   titre: string
   message: string
   isRead: boolean
-  date: string | number[]
+  date?: string | number[]
+  dateCreation?: string | number[]
   data?: any
   lien?: string
+  entityId?: number
 }
 
 type FilterType = 'all' | 'unread' | 'read'
@@ -61,7 +63,7 @@ function formatDate(dateValue: string | number[] | undefined | null): string {
       }
       date = new Date(year, month - 1, day, hour, minute, second);
     } 
-    // Handle ISO string format
+      // Handle ISO string format
     else if (typeof dateValue === 'string') {
       // Try parsing as ISO string
       date = new Date(dateValue);
@@ -72,6 +74,9 @@ function formatDate(dateValue: string | number[] | undefined | null): string {
         if (parts.length === 3) {
           const [d, m, y] = parts.map(Number);
           date = new Date(y, m - 1, d);
+        } else {
+          // It's likely already formatted by the backend (e.g. "14 avr 2026, 11:09")
+          return dateValue;
         }
       }
     } else {
@@ -79,7 +84,8 @@ function formatDate(dateValue: string | number[] | undefined | null): string {
     }
     
     if (isNaN(date.getTime())) {
-      return 'Date invalide';
+      // Last resort fallback
+      return typeof dateValue === 'string' ? dateValue : 'Date invalide';
     }
     
     // Check if date is in the future (more than 1 day ahead)
@@ -112,6 +118,10 @@ function formatRelativeTime(dateValue: string | number[] | undefined | null): st
       date = new Date(year, month - 1, day, hour, minute, second);
     } else if (typeof dateValue === 'string') {
       date = new Date(dateValue);
+      if (isNaN(date.getTime())) {
+        // If it's a backend formatted string, we can't easily compute relative time, so return empty
+        return '';
+      }
     } else {
       return '';
     }
@@ -138,6 +148,7 @@ function formatRelativeTime(dateValue: string | number[] | undefined | null): st
 function getNotificationIcon(type: string) {
   switch (type) {
     case 'NEW_BIEN':
+    case 'NOUVEAU_BIEN':
       return { icon: Building, color: 'text-emerald-600', bg: 'bg-emerald-100' }
     case 'RESERVATION_VALIDATED':
       return { icon: CheckCircle, color: 'text-blue-600', bg: 'bg-blue-100' }
@@ -240,8 +251,8 @@ export default function NotificationsPage() {
     
     // Type filter
     if (typeFilter === 'reservation' && !n.type.includes('RESERVATION')) return false
-    if (typeFilter === 'bien' && n.type !== 'NEW_BIEN') return false
-    if (typeFilter === 'contact' && n.type !== 'CONTACT_RESPONSE') return false
+    if (typeFilter === 'bien' && n.type !== 'NEW_BIEN' && n.type !== 'NOUVEAU_BIEN') return false
+    if (typeFilter === 'contact' && !n.type.includes('CONTACT')) return false
     
     // Search filter
     if (searchQuery) {
@@ -258,15 +269,15 @@ export default function NotificationsPage() {
     unread: unreadCount,
     read: notifications.length - unreadCount,
     reservations: notifications.filter(n => n.type.includes('RESERVATION')).length,
-    biens: notifications.filter(n => n.type === 'NEW_BIEN').length
+    biens: notifications.filter(n => n.type === 'NEW_BIEN' || n.type === 'NOUVEAU_BIEN').length
   }
 
   const handleSectionChange = (section: string) => {
-    if (section === 'dashboard') router.push('/utilisateur/dashboard')
-    else if (section === 'annonces') router.push('/utilisateur/dashboard?section=annonces')
-    else if (section === 'reservations') router.push('/utilisateur/dashboard?section=reservations')
+    if (section === 'dashboard') router.push('/utilisateur/tableau-de-bord')
+    else if (section === 'annonces') router.push('/utilisateur/tableau-de-bord?section=annonces')
+    else if (section === 'reservations') router.push('/utilisateur/tableau-de-bord?section=reservations')
     else if (section === 'messagerie') router.push('/utilisateur/messagerie')
-    else if (section === 'parametres') router.push('/utilisateur/dashboard?section=parametres')
+    else if (section === 'parametres') router.push('/utilisateur/tableau-de-bord?section=parametres')
   }
 
   // Extract bien ID from notification and navigate to detail
@@ -277,38 +288,46 @@ export default function NotificationsPage() {
     }
     
     // Try to extract bien ID from various sources
-    let bienId = null
+    let bienId = notification.entityId;
     
     // Check data property
-    if (notification.data?.bienId) {
+    if (!bienId && notification.data?.bienId) {
       bienId = notification.data.bienId
-    } else if (notification.data?.idBien) {
+    } else if (!bienId && notification.data?.idBien) {
       bienId = notification.data.idBien
     }
     
     // Check lien property
-    if (!bienId && notification.lien) {
+    if (!bienId && notification.lien && notification.lien.includes('bien')) {
       const match = notification.lien.match(/bien[=\/](\d+)/)
-      if (match) bienId = match[1]
+      if (match) bienId = parseInt(match[1])
     }
     
     // Navigate to property detail or annonces with filter
     if (bienId) {
-      router.push(`/annonces?bien=${bienId}`)
+      router.push(`/utilisateur/tableau-de-bord?section=annonces&bien=${bienId}`)
+    } else if (notification.lien) {
+      // go to specific link if present
+      const isExternal = notification.lien.startsWith('http');
+      if (isExternal) {
+          window.open(notification.lien, '_blank');
+      } else {
+          router.push(notification.lien)
+      }
     } else {
-      // Fallback to annonces page
-      router.push('/utilisateur/dashboard?section=annonces')
+      // Fallback
+      router.push('/utilisateur/tableau-de-bord?section=annonces')
     }
   }
 
   return (
     <UserLayout activeSection="notifications" onSectionChange={handleSectionChange}>
       <div className="max-w-6xl mx-auto space-y-8">
-        {/* Premium Header with Glassmorphism */}
+        {/* Premium Header with Glassmorphism - Harmonized with Dashboard */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-900 p-8 text-white shadow-2xl"
+          className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#0c112b] via-[#1a1f4d] to-[#251b4d] p-8 text-white shadow-2xl"
         >
           {/* Background decorations */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
@@ -350,7 +369,7 @@ export default function NotificationsPage() {
               <Button
                 variant="outline"
                 onClick={fetchNotifications}
-                className="bg-white/5 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm"
+                className="bg-white/5 border-white/20 text-white hover:bg-white/10 backdrop-blur-sm px-6 py-6 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Actualiser
@@ -358,7 +377,7 @@ export default function NotificationsPage() {
               {unreadCount > 0 && (
                 <Button
                   onClick={markAllAsRead}
-                  className="bg-white text-slate-900 hover:bg-slate-100 font-semibold shadow-lg"
+                  className="bg-white text-slate-900 hover:bg-slate-100 font-black uppercase tracking-widest text-[10px] px-6 py-6 rounded-xl shadow-lg transition-all active:scale-95"
                 >
                   <CheckCheck className="h-4 w-4 mr-2" />
                   Tout marquer lu
@@ -532,8 +551,10 @@ export default function NotificationsPage() {
             ) : (
               filteredNotifications.map((notification, index) => {
                 const { icon: Icon, color, bg } = getNotificationIcon(notification.type)
-                const isNewBien = notification.type === 'NEW_BIEN'
+                const isNewBien = notification.type === 'NEW_BIEN' || notification.type === 'NOUVEAU_BIEN'
                 const isReservation = notification.type.includes('RESERVATION')
+                const dateValue = notification.dateCreation || notification.date;
+
                 
                 return (
                   <motion.div
@@ -610,11 +631,11 @@ export default function NotificationsPage() {
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-slate-400" />
                               <span className="text-sm font-medium text-slate-600">
-                                {formatDate(notification.date)}
+                                {formatDate(dateValue)}
                               </span>
-                              {formatRelativeTime(notification.date) && (
+                              {formatRelativeTime(dateValue) && (
                                 <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs font-semibold rounded-full">
-                                  {formatRelativeTime(notification.date)}
+                                  {formatRelativeTime(dateValue)}
                                 </span>
                               )}
                             </div>

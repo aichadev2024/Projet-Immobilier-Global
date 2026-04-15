@@ -66,8 +66,8 @@ export default function AdminLoginPage() {
         sessionStorage.setItem('role', role);
       }
 
-      // Redirection vers admin dashboard
-      router.push('/admin/dashboard');
+      // Redirection vers admin tableau de bord
+      router.push('/admin/tableau-de-bord');
 
     } catch (err: any) {
       setError(err.message || 'Erreur lors de la connexion.');

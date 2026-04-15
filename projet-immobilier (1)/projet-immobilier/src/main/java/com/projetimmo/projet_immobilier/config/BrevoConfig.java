@@ -11,6 +11,8 @@ public class BrevoConfig {
     
     private String apiKey;
     private String url;
+    private String senderEmail;
+    private String senderName;
     
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;

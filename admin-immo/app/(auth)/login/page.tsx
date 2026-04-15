@@ -82,14 +82,14 @@ export default function LoginPage() {
 
       // 🔁 Redirection selon rôle
       if (role === "ADMIN") {
-        router.push("/admin/dashboard");
+        router.push("/admin/tableau-de-bord");
       } else if (role === "AGENCE" || role === "AGENT") {
         // AGENT et AGENCE vont vers le même espace
-        router.push("/agence/dashboard");
+        router.push("/agence/tableau-de-bord");
       } else if (role === "UTILISATEUR") {
-        router.push("/utilisateur/dashboard");
+        router.push("/utilisateur/tableau-de-bord");
       } else {
-        router.push("/client/dashboard"); // Fallback pour anciens rôles
+        router.push("/client/tableau-de-bord"); // Fallback pour anciens rôles
       }
 
     } catch (err: any) {

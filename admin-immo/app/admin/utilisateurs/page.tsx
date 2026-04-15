@@ -282,8 +282,8 @@ export default function UtilisateursPage() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
               <option value="TOUS">Tous les statuts</option>
-              <option value="ACTIF">Actifs</option>
-              <option value="INACTIF">Inactifs</option>
+              <option value="ACTIF">Actif</option>
+              <option value="INACTIF">Inactif</option>
             </select>
             
             <select
@@ -292,9 +292,10 @@ export default function UtilisateursPage() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
             >
               <option value="TOUS">Tous les rôles</option>
-              <option value="CLIENT">Clients</option>
-              <option value="AGENT">Agents</option>
-              <option value="ADMIN">Admins</option>
+              <option value="CLIENT">Client</option>
+              <option value="AGENT">Agent</option>
+              <option value="AGENCE">Agence</option>
+              <option value="ADMIN">Administrateur</option>
             </select>
           </div>
         </div>
@@ -351,8 +352,16 @@ export default function UtilisateursPage() {
                       <div className="text-sm text-gray-500">{user.telephone}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                        {user.role}
+                      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+                        user.role === 'ADMIN' ? 'bg-purple-100 text-purple-800' : 
+                        user.role === 'AGENT' ? 'bg-blue-100 text-blue-800' : 
+                        user.role === 'AGENCE' ? 'bg-green-100 text-green-800' : 
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {user.role === 'ADMIN' ? 'Administrateur' : 
+                         user.role === 'AGENT' ? 'Agent' : 
+                         user.role === 'AGENCE' ? 'Agence' : 
+                         'Client'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -364,7 +373,7 @@ export default function UtilisateursPage() {
                         <div className={`w-2 h-2 rounded-full mr-2 ${
                           user.statut === "ACTIF" ? "bg-green-500" : "bg-red-500"
                         }`} />
-                        {user.statut}
+                        {user.statut === "ACTIF" ? "Actif" : "Inactif"}
                       </span>
                     </td>
                     <td className="px-6 py-4">

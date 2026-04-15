@@ -73,10 +73,10 @@ export default function AgencesPage() {
         // Transformer les données du backend au format du frontend
         const formattedAgences: Agence[] = agencesData.map((agence: any) => ({
           id: agence.id,
-          nom: agence.prenom + " " + agence.nom, // L'agence est un utilisateur
+          nom: agence.agenceNom || (agence.prenom + " " + agence.nom),
           email: agence.email,
           telephone: agence.telephone || "Non renseigné",
-          adresse: "Non renseigné", // Pas de relation agence-utilisateur pour le moment
+          adresse: agence.agenceAdresse || "Non renseigné",
           description: "Agence immobilière",
           statut: mapStatutToAgenceStatut(agence.statut),
           dateCreation: agence.createdAt,

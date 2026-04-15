@@ -22,9 +22,9 @@ export default function Sidebar({ user, logout }: SidebarProps) {
   const pathname = usePathname();
 
   const menu = [
-    { name: "Dashboard", href: "/admin/dashboard", icon: Home },
-    { name: "Utilisateurs", href: "/admin/users", icon: Users },
-    { name: "Types de biens", href: "/admin/types", icon: Layers },
+    { name: "Tableau de bord", href: "/admin/tableau-de-bord", icon: Home },
+    { name: "Utilisateurs", href: "/admin/utilisateurs", icon: Users },
+    { name: "Types de biens", href: "/admin/types-biens", icon: Layers },
     { name: "Validation des biens", href: "/admin/validation", icon: CheckCircle },
     { name: "Paramètres", href: "/admin/parametres", icon: Settings },
     { name: "Profil", href: "/admin/profil", icon: User },

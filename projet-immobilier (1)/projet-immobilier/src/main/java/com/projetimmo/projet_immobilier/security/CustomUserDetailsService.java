@@ -21,18 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .findByNomUtilisateur(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur introuvable"));
 
-        // Utiliser le rôle du JWT si disponible, sinon utiliser la base de données
-        String roleNom = "UTILISATEUR"; // Valeur par défaut
-
-        // Essayer d'extraire le rôle depuis le JWT (si disponible dans le contexte)
-        try {
-            // Pour l'instant, utiliser roleAgent puis role comme fallback
-            roleNom = utilisateur.getRoleAgent() != null ? utilisateur.getRoleAgent().toUpperCase()
-                    : utilisateur.getRole() != null ? utilisateur.getRole().getNom().toUpperCase() : "UTILISATEUR";
-        } catch (Exception e) {
-            // En cas d'erreur, utiliser la valeur par défaut
-            roleNom = "UTILISATEUR";
-        }
+        String roleNom = utilisateur.getRole() != null ? utilisateur.getRole().getNom().toUpperCase() : "UTILISATEUR";
 
         return User.builder()
                 .username(utilisateur.getNomUtilisateur())

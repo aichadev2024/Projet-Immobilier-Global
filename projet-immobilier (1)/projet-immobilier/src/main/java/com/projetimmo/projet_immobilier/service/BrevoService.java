@@ -21,6 +21,9 @@ public class BrevoService {
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
+    @Value("${app.backend.url:http://localhost:8080}")
+    private String backendUrl;
+
     @Autowired
     public BrevoService(BrevoConfig brevoConfig, RestTemplate restTemplate) {
         this.brevoConfig = brevoConfig;
@@ -33,8 +36,11 @@ public class BrevoService {
     }
 
     private String getFrontendUrl() {
-        log.info("🌐 Frontend URL utilisée: {}", frontendUrl);
         return frontendUrl;
+    }
+
+    private String getBackendUrl() {
+        return backendUrl;
     }
 
     public void sendEmail(String toEmail, String toName, String subject, String htmlContent, String textContent) {
@@ -47,8 +53,8 @@ public class BrevoService {
             // Construction du corps de la requête
             Map<String, Object> emailBody = Map.of(
                     "sender", Map.of(
-                            "email", "diarrassoubaa505@gmail.com",
-                            "name", "Projet Immobilier"),
+                            "email", brevoConfig.getSenderEmail() != null ? brevoConfig.getSenderEmail() : "diarrassoubaa505@gmail.com",
+                            "name", brevoConfig.getSenderName() != null ? brevoConfig.getSenderName() : "Projet Immobilier"),
                     "to", Collections.singletonList(Map.of(
                             "email", toEmail,
                             "name", toName)),
@@ -67,10 +73,10 @@ public class BrevoService {
                     String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("✅ Email envoyé avec succès à {} - Response: {}", toEmail, response.getStatusCode());
+                log.info("✅ Email envoyé avec succès à {} - Status: {} - Body: {}", toEmail, response.getStatusCode(), response.getBody());
             } else {
-                log.error("❌ Erreur lors de l'envoi de l'email à {}: {}", toEmail, response.getStatusCode());
-                throw new RuntimeException("Échec de l'envoi d'email: " + response.getStatusCode());
+                log.error("❌ Erreur lors de l'envoi de l'email à {}: Status: {} - Body: {}", toEmail, response.getStatusCode(), response.getBody());
+                throw new RuntimeException("Échec de l'envoi d'email: " + response.getStatusCode() + " - " + response.getBody());
             }
 
         } catch (Exception e) {
@@ -95,14 +101,14 @@ public class BrevoService {
                 "<p style='color: #666; line-height: 1.6;'>Pour activer votre compte, veuillez cliquer sur le bouton ci-dessous :</p>"
                 +
                 "<div style='text-align: center; margin: 30px 0;'>" +
-                "<a href='http://10.30.118.76:8080/auth/validate-account?token=" + token + "' " +
+                "<a href='" + getBackendUrl() + "/auth/validate-account?token=" + token + "' " +
                 "style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 30px; " +
                 "text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;'>Valider mon compte</a>" +
                 "</div>" +
                 "<div style='text-align: center; margin: 20px 0;'>" +
                 "<p style='color: #666; font-size: 14px;'>Si le bouton ne fonctionne pas, copiez-collez ce lien :</p>" +
                 "<p style='color: #007bff; font-size: 12px; word-break: break-all; background: #f8f9fa; padding: 10px; border-radius: 5px;'>" +
-                "http://10.30.118.76:8080/auth/validate-account?token=" + token + "</p>" +
+                getBackendUrl() + "/auth/validate-account?token=" + token + "</p>" +
                 "</div>" +
                 "<p style='color: #999; font-size: 14px;'>Ce lien expirera dans 24 heures.</p>" +
                 "</div>" +
@@ -114,7 +120,7 @@ public class BrevoService {
 
         String textContent = "Bonjour " + username + ",\n\n" +
                 "Veuillez cliquer sur le lien suivant pour valider votre compte :\n" +
-                "http://10.30.118.76:8080/auth/validate-account?token=" + token + "\n\n" +
+                getBackendUrl() + "/auth/validate-account?token=" + token + "\n\n" +
                 "Ce lien expirera dans 24 heures.\n\n" +
                 "Cordialement,\n" +
                 "L'équipe Projet Immobilier";

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.UUID;
@@ -117,6 +118,33 @@ public class UtilisateurController {
         @GetMapping
         public List<UtilisateurResponse> getAllUtilisateurs() {
                 return utilisateurService.listerUtilisateurs();
+        }
+
+        @GetMapping("/clients/mes-clients")
+        @PreAuthorize("hasAnyRole('AGENCE', 'AGENT')")
+        public List<UtilisateurResponse> getMesClients(Authentication authentication) {
+                String username = authentication.getName();
+                Utilisateur current = utilisateurService.getUtilisateurParNomUtilisateur(username);
+
+                if (current.getAgence() == null) {
+                        throw new RuntimeException("Aucune agence associée");
+                }
+
+                return utilisateurService.listerClientsAgence(current.getAgence().getId())
+                                .stream()
+                                .map(user -> UtilisateurResponse.builder()
+                                                .id(user.getId())
+                                                .prenom(user.getPrenom())
+                                                .nom(user.getNom())
+                                                .email(user.getEmail())
+                                                .telephone(user.getTelephone())
+                                                .nomUtilisateur(user.getNomUtilisateur())
+                                                .role(user.getRole().getNom())
+                                                .statut(user.getStatut() != null ? user.getStatut().name() : "ACTIF")
+                                                .createdAt(user.getCreatedAt())
+                                                .photoProfil(user.getPhotoProfil())
+                                                .build())
+                                .toList();
         }
 
         @PutMapping("/{id}/photo")

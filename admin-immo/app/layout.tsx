@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Admin Immobilier",
-  description: "Plateforme de gestion immobilière",
+  title: "BamakoHome | Immobilier au Mali",
+  description: "La référence immobilière au Mali. Trouvez votre bien idéal avec BamakoHome.",
 };
 
 export default function RootLayout({

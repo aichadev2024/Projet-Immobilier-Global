@@ -94,10 +94,10 @@ public class SecurityConfig {
                                                 .hasRole("ADMIN")
 
                                                 // 🔐 BIENS AGENCE
-                                                .requestMatchers("/api/biens/mes-biens").hasRole("AGENCE")
-                                                .requestMatchers(HttpMethod.POST, "/api/biens").hasRole("AGENCE")
-                                                .requestMatchers(HttpMethod.PUT, "/api/biens/**").hasRole("AGENCE")
-                                                .requestMatchers(HttpMethod.DELETE, "/api/biens/**").hasRole("AGENCE")
+                                                .requestMatchers("/api/biens/mes-biens").hasAnyRole("AGENCE", "AGENT")
+                                                .requestMatchers(HttpMethod.POST, "/api/biens").hasAnyRole("AGENCE", "AGENT")
+                                                .requestMatchers(HttpMethod.PUT, "/api/biens/**").hasAnyRole("AGENCE", "AGENT")
+                                                .requestMatchers(HttpMethod.DELETE, "/api/biens/**").hasAnyRole("AGENCE", "AGENT")
                                                 .requestMatchers(HttpMethod.POST, "/api/biens/{id}/validate")
                                                 .hasRole("ADMIN")
                                                 .requestMatchers(HttpMethod.POST, "/api/biens/{id}/refuse")
@@ -107,22 +107,22 @@ public class SecurityConfig {
                                                 .requestMatchers(HttpMethod.GET, "/api/annonces/**").permitAll()
 
                                                 // 🔐 ANNONCES AGENCE
-                                                .requestMatchers(HttpMethod.POST, "/api/annonces/**").hasRole("AGENCE")
-                                                .requestMatchers(HttpMethod.PUT, "/api/annonces/**").hasRole("AGENCE")
+                                                .requestMatchers(HttpMethod.POST, "/api/annonces/**").hasAnyRole("AGENCE", "AGENT")
+                                                .requestMatchers(HttpMethod.PUT, "/api/annonces/**").hasAnyRole("AGENCE", "AGENT")
                                                 .requestMatchers(HttpMethod.DELETE, "/api/annonces/**")
-                                                .hasRole("AGENCE")
+                                                .hasAnyRole("AGENCE", "AGENT")
 
                                                 // 🔐 MEDIAS
                                                 .requestMatchers(HttpMethod.POST, "/api/medias/**")
-                                                .hasAnyRole("ADMIN", "SUPER_ADMIN", "AGENCE")
+                                                .hasAnyRole("ADMIN", "SUPER_ADMIN", "AGENCE", "AGENT")
                                                 .requestMatchers(HttpMethod.GET, "/api/medias/**").authenticated()
                                                 .requestMatchers(HttpMethod.DELETE, "/api/medias/**")
-                                                .hasAnyRole("ADMIN", "SUPER_ADMIN", "AGENCE")
+                                                .hasAnyRole("ADMIN", "SUPER_ADMIN", "AGENCE", "AGENT")
 
                                                 // DOCUMENTS
-                                                .requestMatchers(HttpMethod.POST, "/api/documents").hasRole("AGENCE")
+                                                .requestMatchers(HttpMethod.POST, "/api/documents").hasAnyRole("AGENCE", "AGENT")
                                                 .requestMatchers(HttpMethod.DELETE, "/api/documents/{id}")
-                                                .hasRole("AGENCE")
+                                                .hasAnyRole("AGENCE", "AGENT")
                                                 .requestMatchers(HttpMethod.GET, "/api/documents/**").authenticated()
 
                                                 // NOTIFICATIONS - Utilisateurs authentifiés
@@ -133,6 +133,7 @@ public class SecurityConfig {
 
                                                 // UTILISATEUR CONNECTE
                                                 .requestMatchers("/api/utilisateurs/me").authenticated()
+                                                .requestMatchers("/api/utilisateurs/clients/mes-clients").hasAnyRole("AGENCE", "AGENT")
                                                 .requestMatchers("/api/utilisateurs/change-password").authenticated()
 
                                                 // ADMIN

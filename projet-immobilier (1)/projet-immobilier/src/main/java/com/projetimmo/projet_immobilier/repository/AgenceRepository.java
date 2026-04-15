@@ -44,4 +44,7 @@ public interface AgenceRepository extends JpaRepository<Agence, UUID> {
     List<Agence> findByIsDeletedFalse();
 
     Optional<Agence> findByUtilisateursNomUtilisateur(String nomUtilisateur);
+
+    @Query("SELECT a FROM Agence a JOIN a.utilisateurs u WHERE u.id = :agentId AND a.isDeleted = false")
+    Optional<Agence> findByAgentId(@Param("agentId") UUID agentId);
 }

@@ -57,6 +57,10 @@ public class Bien {
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
+    // 📝 Commentaire de vérification par l'agence
+    @Column(name = "commentaire_verification", columnDefinition = "TEXT")
+    private String commentaireVerification;
+
     @Builder.Default
     private Boolean isDeleted = false;
 
@@ -69,6 +73,11 @@ public class Bien {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_agence", nullable = false)
     private Agence agence;
+
+    // 👤 Agent qui a créé ce bien
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_created_by")
+    private Utilisateur createdBy;
 
     @OneToMany(mappedBy = "bien")
     private List<Media> medias;

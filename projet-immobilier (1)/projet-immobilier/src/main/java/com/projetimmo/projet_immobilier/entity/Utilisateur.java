@@ -63,8 +63,6 @@ public class Utilisateur {
 
     private String permis;
 
-    private String roleAgent;
-
     @Builder.Default
     @Column(nullable = false, columnDefinition = "boolean default false")
     private Boolean isDeleted = false;

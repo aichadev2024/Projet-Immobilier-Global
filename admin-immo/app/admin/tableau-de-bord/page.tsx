@@ -271,7 +271,7 @@ export default function AdminDashboard() {
             <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
             <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-purple-600 rounded-full animate-spin" style={{ animationDuration: '1.5s' }}></div>
           </div>
-          <p className="mt-6 text-slate-600 font-medium">Chargement du dashboard...</p>
+          <p className="mt-6 text-slate-600 font-medium">Chargement du tableau de bord...</p>
         </div>
       </div>
     );
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
               Tableau de <span className="text-yellow-300">bord</span>
             </h1>
             <p className="text-indigo-100 text-lg max-w-md">
-              Vue d'ensemble et gestion complète de la plateforme ImmoGlobal
+              Vue d'ensemble et gestion complète de la plateforme BamakoHome
             </p>
           </div>
           <div className="flex items-center gap-3">

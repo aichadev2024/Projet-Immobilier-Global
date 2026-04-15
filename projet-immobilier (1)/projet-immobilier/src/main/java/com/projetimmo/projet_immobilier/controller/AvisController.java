@@ -25,30 +25,34 @@ public class AvisController {
 
     @PostMapping
     @PreAuthorize("hasRole('UTILISATEUR')")
-    public ResponseEntity<AvisResponse> createAvis(@RequestBody AvisRequest request, Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> createAvis(@RequestBody AvisRequest request, Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(avisService.createAvis(request, user.getId()));
     }
 
     @GetMapping("/agence")
     @PreAuthorize("hasRole('AGENCE')")
-    public ResponseEntity<List<AvisResponse>> getMesAvis(Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> getMesAvis(Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).build();
         return ResponseEntity.ok(avisService.getAvisForAgence(user.getId()));
     }
 
     @PutMapping("/{id}/repondre")
     @PreAuthorize("hasRole('AGENCE')")
-    public ResponseEntity<Void> repondreAvis(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> repondreAvis(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).build();
         avisService.repondreAvis(id, body.get("reponse"), user.getId());
         return ResponseEntity.ok().build();
     }
 
     @PutMapping("/{id}/statut")
     @PreAuthorize("hasRole('AGENCE')")
-    public ResponseEntity<Void> changerStatut(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
-        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElseThrow();
+    public ResponseEntity<?> changerStatut(@PathVariable Long id, @RequestBody Map<String, String> body, Authentication auth) {
+        Utilisateur user = utilisateurRepository.findByNomUtilisateur(auth.getName()).orElse(null);
+        if (user == null) return ResponseEntity.status(401).build();
         avisService.changerStatutAvis(id, body.get("statut"), user.getId());
         return ResponseEntity.ok().build();
     }

@@ -31,4 +31,11 @@ public interface BienService {
     void refuserBien(Long id);
     
     BienResponse getBienDetailsWithMedias(Long idBien);
+
+    // 🔒 Méthodes de vérification par l'agence
+    List<BienResponse> listerBiensEnAttenteValidation();
+    
+    void approuverBien(Long id, String commentaire);
+    
+    void rejeterBien(Long id, String commentaire);
 }

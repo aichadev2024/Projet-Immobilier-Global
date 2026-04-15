@@ -96,7 +96,7 @@ export default function AnnonceDetailsPage() {
   
   const phoneNumber = bien.utilisateur?.telephone || bien.telephone || "+22300000000";
   const waNumber = phoneNumber.replace(/[^0-9]/g, '');
-  const waMessage = encodeURIComponent(`Bonjour, je suis intéressé(e) par le bien "${bien.libelle}" disponible sur ImmoGlobal.`);
+  const waMessage = encodeURIComponent(`Bonjour, je suis intéressé(e) par le bien "${bien.libelle}" disponible sur BamakoHome.`);
   const waLink = `https://wa.me/${waNumber}?text=${waMessage}`;
 
   return (

@@ -504,7 +504,7 @@ export default function AnnoncesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getTypeBadge(annonce.type)}`}>
-                        {annonce.type}
+                        {annonce.type === 'VENTE' ? 'Vente' : annonce.type === 'LOCATION' ? 'Location' : 'Location-Vente'}
                       </span>
                     </td>
                     <td className="px-6 py-4">

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserLayout } from '../UserLayout';
 import {
@@ -16,9 +16,20 @@ import {
   ArrowLeft,
   Loader2,
   Inbox,
-  Clock
+  Clock,
+  Sparkles,
+  ChevronRight,
+  User,
+  MapPin,
+  Calendar,
+  Heart,
+  LayoutGrid,
+  Wallet,
+  Key,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Button } from '@/components/ui/button';
 
 interface Contact {
   id: string;
@@ -40,7 +51,7 @@ interface Message {
   status: 'SENT' | 'DELIVERED' | 'READ';
 }
 
-// Helper to safely format dates
+// Robust Helper to safely format dates - handles Java LocalDateTime array format
 function formatDate(dateValue: string | number[] | undefined | null): string {
   if (!dateValue) return 'Date inconnue';
   
@@ -60,16 +71,34 @@ function formatDate(dateValue: string | number[] | undefined | null): string {
       return 'Date invalide';
     }
     
-    return date.toLocaleDateString('fr-FR');
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
   } catch (error) {
     return 'Date invalide';
   }
 }
 
+// Relative time helper
+function formatTime(dateValue: string | number[] | undefined | null): string {
+    if (!dateValue) return '--:--';
+    try {
+        let date: Date;
+        if (Array.isArray(dateValue)) {
+            const [year, month, day, hour = 0, minute = 0] = dateValue;
+            date = new Date(year, month - 1, day, hour, minute);
+        } else {
+            date = new Date(dateValue as string);
+        }
+        return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    } catch { return '--:--'; }
+}
+
 export default function UtilisateurMessagerie() {
   const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [messageText, setMessageText] = useState('');
@@ -77,32 +106,20 @@ export default function UtilisateurMessagerie() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
 
-  // Filter contacts based on search term
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredContacts(contacts);
-    } else {
-      const term = searchTerm.toLowerCase();
-      setFilteredContacts(
-        contacts.filter(
-          (c) =>
-            c.nom.toLowerCase().includes(term) ||
-            c.lastMessage.toLowerCase().includes(term)
-        )
-      );
-    }
+  const filteredContacts = useMemo(() => {
+    if (!searchTerm.trim()) return contacts;
+    const term = searchTerm.toLowerCase();
+    return contacts.filter(c => 
+      c.nom.toLowerCase().includes(term) || 
+      c.lastMessage.toLowerCase().includes(term)
+    );
   }, [contacts, searchTerm]);
 
   const fetchContacts = async () => {
-    const token =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('accessToken') ||
-          sessionStorage.getItem('accessToken')
-        : null;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken') : null;
     if (!token) return;
     try {
       setLoading(true);
-      // API endpoint pour récupérer les contacts de l'utilisateur (conversations avec agences)
       const res = await fetch('http://localhost:8080/api/contacts/utilisateur/recus', {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -111,26 +128,19 @@ export default function UtilisateurMessagerie() {
         if (data.success && data.contacts) {
           const mapped: Contact[] = data.contacts.map((c: any) => ({
             id: c.id?.toString() || Math.random().toString(),
-            nom: c.agence?.nom || c.utilisateur?.nom || 'Agence',
-            prenom: c.agence?.prenom || c.utilisateur?.prenom,
-            avatar: c.agence?.nom?.charAt(0).toUpperCase() || 'A',
-            lastMessage: c.reponse || c.message || 'Aucun message',
-            time:
-              c.dateContact && !isNaN(new Date(c.dateContact).getTime())
-                ? formatDate(c.dateContact)
-                : 'Date inconnue',
+            nom: c.agence?.nom || c.utilisateur?.nom || 'Agence Exclusive',
+            avatar: (c.agence?.nom || c.utilisateur?.nom || 'A').charAt(0).toUpperCase(),
+            lastMessage: c.reponse || c.message || 'Début de discussion',
+            time: formatDate(c.dateContact),
             unread: c.statut === 'EN_ATTENTE' ? 1 : 0,
-            online: false,
+            online: Math.random() > 0.5,
             raw: c,
           }));
           setContacts(mapped);
-          if (mapped.length > 0 && !selectedContact) {
-            setSelectedContact(mapped[0]);
-          }
         }
       }
     } catch (err) {
-      console.error('Erreur fetch contacts:', err);
+      console.error('Erreur contacts:', err);
     } finally {
       setLoading(false);
     }
@@ -138,7 +148,6 @@ export default function UtilisateurMessagerie() {
 
   useEffect(() => {
     fetchContacts();
-    // Poll toutes les 30 secondes
     const interval = setInterval(fetchContacts, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -151,13 +160,7 @@ export default function UtilisateurMessagerie() {
         conv.push({
           id: 'msg-' + raw.id,
           text: raw.message,
-          time:
-            raw.dateContact && !isNaN(new Date(raw.dateContact).getTime())
-              ? new Date(raw.dateContact).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : '--:--',
+          time: formatTime(raw.dateContact),
           isMe: false,
           status: 'READ',
         });
@@ -166,399 +169,308 @@ export default function UtilisateurMessagerie() {
         conv.push({
           id: 'rep-' + raw.id,
           text: raw.reponse,
-          time:
-            raw.dateReponse && !isNaN(new Date(raw.dateReponse).getTime())
-              ? new Date(raw.dateReponse).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })
-              : new Date().toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                }),
+          time: formatTime(raw.dateReponse),
           isMe: true,
           status: 'SENT',
         });
       }
       setConversation(conv);
-
-      // Marquer comme lu si non lu
       if (raw.statut === 'EN_ATTENTE') {
-        markAsReadAndRefresh(raw.id);
+        const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
+        fetch(`http://localhost:8080/api/contacts/${raw.id}/marquer-lu`, {
+            method: 'PUT',
+            headers: { Authorization: `Bearer ${token}` },
+        });
       }
     }
   }, [selectedContact]);
-
-  const markAsReadAndRefresh = async (contactId: string) => {
-    const token =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('accessToken') ||
-          sessionStorage.getItem('accessToken')
-        : null;
-    try {
-      await fetch(`http://localhost:8080/api/contacts/${contactId}/marquer-lu`, {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setContacts((c) =>
-        c.map((item) =>
-          item.id === contactId.toString() ? { ...item, unread: 0 } : item
-        )
-      );
-    } catch (err) {}
-  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() || !selectedContact) return;
 
-    const token =
-      typeof window !== 'undefined'
-        ? localStorage.getItem('accessToken') ||
-          sessionStorage.getItem('accessToken')
-        : null;
+    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     setSending(true);
     try {
-      const res = await fetch(
-        `http://localhost:8080/api/contacts/${selectedContact.id}/repondre`,
-        {
+      const res = await fetch(`http://localhost:8080/api/contacts/${selectedContact.id}/repondre`, {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ reponse: messageText }),
-        }
-      );
+      });
       if (res.ok) {
         const newMessage: Message = {
           id: Date.now().toString(),
           text: messageText,
-          time: new Date().toLocaleTimeString('fr-FR', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
+          time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
           isMe: true,
           status: 'SENT',
         };
         setConversation([...conversation, newMessage]);
         setMessageText('');
-        // Update contact preview
-        setContacts((c) =>
-          c.map((item) =>
-            item.id === selectedContact.id
-              ? { ...item, lastMessage: messageText }
-              : item
-          )
-        );
+        setContacts(c => c.map(item => item.id === selectedContact.id ? { ...item, lastMessage: messageText } : item));
       }
     } catch (err) {
-      console.error('Erreur envoi message:', err);
+      console.error('Erreur message:', err);
     } finally {
       setSending(false);
     }
   };
 
-  const MessageStatusIcon = ({
-    status,
-  }: {
-    status: 'SENT' | 'DELIVERED' | 'READ';
-  }) => {
-    switch (status) {
-      case 'SENT':
-        return <Check className="w-3.5 h-3.5 text-slate-400" />;
-      case 'DELIVERED':
-        return <CheckCheck className="w-3.5 h-3.5 text-slate-400" />;
-      case 'READ':
-        return <CheckCheck className="w-3.5 h-3.5 text-blue-500" />;
-    }
-  };
-
   const handleSectionChange = (section: string) => {
-    if (section === 'dashboard') router.push('/utilisateur/dashboard');
+    if (section === 'dashboard') router.push('/utilisateur/tableau-de-bord');
     else if (section === 'annonces')
-      router.push('/utilisateur/dashboard?section=annonces');
+      router.push('/utilisateur/tableau-de-bord?section=annonces');
     else if (section === 'reservations')
-      router.push('/utilisateur/dashboard?section=reservations');
+      router.push('/utilisateur/tableau-de-bord?section=reservations');
     else if (section === 'notifications')
       router.push('/utilisateur/notifications');
     else if (section === 'parametres')
-      router.push('/utilisateur/dashboard?section=parametres');
+      router.push('/utilisateur/tableau-de-bord?section=parametres');
   };
 
   return (
     <UserLayout activeSection="messagerie" onSectionChange={handleSectionChange}>
-      {/* Premium Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-6 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6 text-white shadow-2xl"
-      >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-pink-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-        
-        <div className="relative flex items-center gap-4">
-          <div className="w-14 h-14 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
-            <MessageSquare className="h-7 w-7 text-white" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold uppercase tracking-widest text-purple-300">Communication</span>
-            </div>
-            <h1 className="text-2xl font-black tracking-tight">Messagerie</h1>
-            <p className="text-white/70 text-sm">
-              Échangez avec les agences immobilières
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
-      <div className="h-[calc(100vh-14rem)] flex flex-col md:flex-row gap-6">
-        {/* Left Pane - Contacts List */}
-        <div className="w-full md:w-80 lg:w-96 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full flex-shrink-0">
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-              <MessageSquare className="w-6 h-6 text-blue-500" />
-              Messagerie
-            </h2>
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
-              {contacts.length} conversations
-            </span>
-          </div>
-
-          <div className="p-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Rechercher une conversation..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 font-medium focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
-              />
-            </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            {loading ? (
-              <div className="p-8 text-center">
-                <Loader2 className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">Chargement...</p>
-              </div>
-            ) : filteredContacts.length === 0 ? (
-              <div className="p-8 text-center">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Inbox className="w-8 h-8 text-slate-400" />
+      <div className="flex flex-col h-[calc(100vh-8rem)]">
+        {/* Header Premium */}
+        <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-[#0c112b] via-[#1a1f4d] to-[#251b4d] p-8 text-white shadow-2xl"
+        >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[100px]" />
+            <div className="relative flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 shadow-lg">
+                        <MessageSquare className="h-8 w-8 text-white" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Sparkles className="h-4 w-4 text-amber-300" />
+                            <span className="text-blue-300 text-[10px] font-black uppercase tracking-[0.2em]">Conciergerie Immobilière</span>
+                        </div>
+                        <h1 className="text-3xl font-black tracking-tighter">Messagerie Privée</h1>
+                        <p className="text-blue-100/60 text-sm font-medium">Échangez en toute confidentialité avec vos conseillers.</p>
+                    </div>
                 </div>
-                <p className="text-slate-600 font-medium">
-                  {searchTerm ? 'Aucun résultat' : 'Aucune conversation'}
-                </p>
-                <p className="text-sm text-slate-400 mt-1">
-                  {searchTerm
-                    ? 'Essayez avec d\'autres termes'
-                    : 'Vos messages avec les agences apparaîtront ici'}
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {filteredContacts.map((contact) => (
-                  <motion.div
-                    key={contact.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    onClick={() => setSelectedContact(contact)}
-                    className={`flex items-start gap-3 p-4 cursor-pointer transition-all ${
-                      selectedContact?.id === contact.id
-                        ? 'bg-blue-50 border-l-4 border-blue-500'
-                        : 'border-l-4 border-transparent hover:bg-slate-50'
-                    }`}
-                  >
-                    <div className="relative flex-shrink-0">
-                      <div
-                        className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-lg shadow-sm border ${
-                          selectedContact?.id === contact.id
-                            ? 'bg-blue-600 text-white border-blue-700'
-                            : 'bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-700 border-blue-200'
-                        }`}
-                      >
-                        {contact.avatar}
-                      </div>
-                      {contact.online && (
-                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-center mb-1">
-                        <h3
-                          className={`font-bold truncate text-sm ${
-                            contact.unread > 0 ? 'text-slate-900' : 'text-slate-700'
-                          }`}
-                        >
-                          {contact.nom}
-                        </h3>
-                        <span
-                          className={`text-xs font-semibold ${
-                            contact.unread > 0 ? 'text-blue-600' : 'text-slate-400'
-                          }`}
-                        >
-                          {contact.time}
-                        </span>
-                      </div>
-                      <p
-                        className={`text-sm truncate ${
-                          contact.unread > 0
-                            ? 'font-semibold text-slate-800'
-                            : 'text-slate-500'
-                        }`}
-                      >
-                        {contact.lastMessage}
-                      </p>
-                    </div>
-                    {contact.unread > 0 && (
-                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold shadow-md">
-                        {contact.unread}
-                      </div>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+            </div>
+        </motion.div>
 
-        {/* Right Pane - Chat Window */}
-        {selectedContact ? (
-          <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-100 flex flex-col h-full overflow-hidden">
-            {/* Chat Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between bg-gradient-to-r from-slate-50 to-white">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setSelectedContact(null)}
-                  className="md:hidden p-2 hover:bg-slate-100 rounded-lg text-slate-500"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-100 to-indigo-100 text-blue-600 flex items-center justify-center font-bold text-xl border border-blue-200">
-                    {selectedContact.avatar}
+        <div className="flex-1 flex gap-8 min-h-0">
+          {/* Contacts Sidebar - Premium Glassmorphism */}
+          <motion.div 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="hidden md:flex w-96 bg-white/70 backdrop-blur-xl rounded-[2.5rem] border border-white shadow-2xl shadow-slate-200/50 flex-col overflow-hidden"
+          >
+            <div className="p-8 pb-4">
+               <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 rounded-lg shadow-lg shadow-blue-500/20">
+                    <Search className="w-4 h-4 text-white" strokeWidth={3} />
                   </div>
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">
-                    {selectedContact.nom}
-                  </h2>
-                  <p className="text-sm font-medium text-slate-500">
-                    Agence immobilière
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button className="p-2.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all border border-slate-200">
-                  <Phone className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Chat Messages */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 bg-slate-50/50">
-              <div className="flex justify-center">
-                <span className="px-4 py-1.5 bg-white text-slate-500 text-xs font-medium rounded-full border border-slate-200 shadow-sm">
-                  {selectedContact?.raw?.bien?.libelle
-                    ? `À propos de: ${selectedContact.raw.bien.libelle}`
-                    : 'Conversation'}
-                </span>
-              </div>
-
-              <AnimatePresence>
-                {conversation.map((msg, index) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`max-w-[80%] sm:max-w-[70%] flex flex-col gap-1 ${
-                        msg.isMe ? 'items-end' : 'items-start'
-                      }`}
-                    >
-                      <div
-                        className={`p-4 rounded-2xl shadow-sm text-sm leading-relaxed ${
-                          msg.isMe
-                            ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-tr-sm border border-blue-400/30'
-                            : 'bg-white text-slate-800 rounded-tl-sm border border-slate-200'
-                        }`}
-                      >
-                        {msg.text}
-                      </div>
-                      <div className="flex items-center gap-1 text-[11px] font-medium text-slate-400 px-1">
-                        <Clock className="h-3 w-3" />
-                        {msg.time}
-                        {msg.isMe && <MessageStatusIcon status={msg.status} />}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-
-              {conversation.length === 0 && (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400">
-                  <MessageSquare className="w-12 h-12 mb-3 opacity-50" />
-                  <p className="text-sm">Aucun message</p>
-                  <p className="text-xs">Envoyez un message pour commencer</p>
-                </div>
-              )}
-            </div>
-
-            {/* Chat Input */}
-            <div className="p-4 bg-white border-t border-slate-100">
-              <form
-                onSubmit={handleSendMessage}
-                className="flex items-end gap-3 max-w-4xl mx-auto"
-              >
-                <button
-                  type="button"
-                  className="p-3 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors"
-                >
-                  <Paperclip className="w-5 h-5" />
-                </button>
-                <div className="flex-1 bg-slate-50 border border-slate-200 rounded-2xl focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500 transition-all overflow-hidden flex items-center">
                   <input
                     type="text"
-                    placeholder="Écrivez un message..."
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    className="w-full py-3.5 px-4 bg-transparent outline-none text-slate-900 font-medium text-sm sm:text-base placeholder:text-slate-400"
+                    placeholder="Chercher une discussion..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-14 pr-6 py-4 bg-slate-50 border-2 border-slate-100 rounded-2xl text-slate-900 font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:bg-white transition-all outline-none placeholder:text-slate-400"
                   />
+               </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 pb-8 space-y-2 custom-scrollbar">
+               {loading ? (
+                  <div className="py-20 flex flex-col items-center gap-4">
+                     <Loader2 className="animate-spin text-blue-500" size={32} />
+                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Initialisation...</p>
+                  </div>
+               ) : filteredContacts.length === 0 ? (
+                  <div className="py-20 text-center px-8">
+                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+                        <Inbox className="w-8 h-8 text-slate-300" />
+                     </div>
+                     <p className="text-slate-900 font-black text-sm uppercase mb-1">Aucun message</p>
+                     <p className="text-slate-400 text-xs font-medium italic">Vos échanges avec les agences apparaîtront ici.</p>
+                  </div>
+               ) : (
+                  filteredContacts.map((contact) => (
+                    <motion.div
+                      key={contact.id}
+                      whileHover={{ x: 4 }}
+                      onClick={() => setSelectedContact(contact)}
+                      className={`flex items-center gap-4 p-5 rounded-3xl cursor-pointer transition-all ${
+                        selectedContact?.id === contact.id
+                          ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/30'
+                          : 'hover:bg-slate-50 border border-transparent hover:border-slate-100'
+                      }`}
+                    >
+                      <div className="relative">
+                        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center font-black text-xl shadow-sm border ${
+                            selectedContact?.id === contact.id ? 'from-white/20 to-white/10 border-white/20' : 'from-slate-100 to-white border-slate-100 text-blue-600'
+                        }`}>
+                          {contact.avatar}
+                        </div>
+                        {contact.online && (
+                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full shadow-lg" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                          <h3 className="font-black truncate text-sm uppercase tracking-tight">
+                            {contact.nom}
+                          </h3>
+                        </div>
+                        <p className={`text-xs truncate font-medium ${selectedContact?.id === contact.id ? 'text-blue-100' : 'text-slate-500'}`}>
+                          {contact.lastMessage}
+                        </p>
+                      </div>
+                      {contact.unread > 0 && selectedContact?.id !== contact.id && (
+                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-[10px] font-black shadow-lg">
+                          {contact.unread}
+                        </div>
+                      )}
+                    </motion.div>
+                  ))
+               )}
+            </div>
+          </motion.div>
+
+          {/* Chat Pane */}
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex-1 bg-white/70 backdrop-blur-xl rounded-[3.5rem] border border-white shadow-2xl shadow-slate-200/50 flex flex-col overflow-hidden relative"
+          >
+            {selectedContact ? (
+              <>
+                {/* Chat Header */}
+                <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white/50">
+                  <div className="flex items-center gap-5">
+                    <button onClick={() => setSelectedContact(null)} className="md:hidden p-3 bg-slate-50 text-slate-500 rounded-2xl">
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-blue-500/20">
+                      {selectedContact.avatar}
+                    </div>
+                    <div>
+                      <h4 className="text-xl font-black text-slate-900 tracking-tighter uppercase">{selectedContact.nom}</h4>
+                      <div className="flex items-center gap-2">
+                         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                         <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Conseiller en ligne</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                     <button className="p-4 bg-slate-50 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-2xl transition-all border border-slate-100">
+                        <Phone size={20} strokeWidth={3} />
+                     </button>
+                     <button className="p-4 bg-slate-50 text-slate-400 hover:text-slate-900 rounded-2xl transition-all border border-slate-100">
+                        <MoreVertical size={20} strokeWidth={3} />
+                     </button>
+                  </div>
                 </div>
-                <button
-                  type="submit"
-                  disabled={!messageText.trim() || sending}
-                  className="p-3 bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all disabled:opacity-50 disabled:shadow-none flex items-center justify-center min-w-[3rem]"
-                >
-                  {sending ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5" />
-                  )}
-                </button>
-              </form>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col items-center justify-center text-slate-400 p-8">
-            <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
-              <MessageSquare className="w-10 h-10 text-slate-300" />
-            </div>
-            <h3 className="text-lg font-semibold text-slate-600 mb-1">
-              Sélectionnez une conversation
-            </h3>
-            <p className="text-sm text-slate-400 text-center max-w-sm">
-              Choisissez une agence dans la liste pour voir vos messages et continuer la conversation
-            </p>
-          </div>
-        )}
+
+                {/* Messages Area */}
+                <div className="flex-1 overflow-y-auto p-10 space-y-6 bg-slate-50/30 custom-scrollbar">
+                   {selectedContact.raw?.bien && (
+                      <div className="flex justify-center mb-10">
+                        <motion.div 
+                          initial={{ scale: 0.9, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          className="bg-white p-4 rounded-[2rem] border border-slate-100 shadow-xl flex items-center gap-4 max-w-sm"
+                        >
+                           <div className="w-16 h-16 bg-blue-50 rounded-2xl flex-shrink-0 overflow-hidden border border-blue-50">
+                              <img 
+                                src={selectedContact.raw.bien.images?.[0] ? (selectedContact.raw.bien.images[0].startsWith("http") ? selectedContact.raw.bien.images[0] : `http://localhost:8080${selectedContact.raw.bien.images[0]}`) : "/images/maison bamako.webp"} 
+                                className="w-full h-full object-cover" 
+                                alt="Bien" 
+                              />
+                           </div>
+                           <div className="flex-1 min-w-0">
+                              <p className="text-[10px] font-black text-blue-500 uppercase">Objet de la demande</p>
+                              <p className="font-black text-slate-900 truncate tracking-tight">{selectedContact.raw.bien.libelle}</p>
+                              <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-bold">
+                                 <MapPin size={10} /> {selectedContact.raw.bien.ville}
+                              </div>
+                           </div>
+                        </motion.div>
+                      </div>
+                   )}
+
+                  <AnimatePresence>
+                    {conversation.map((msg, idx) => (
+                      <motion.div
+                        key={msg.id}
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        className={`flex ${msg.isMe ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[80%] space-y-2 ${msg.isMe ? 'items-end' : 'items-start'}`}>
+                           <div className={`p-6 rounded-[2rem] text-sm font-medium shadow-sm transition-all ${
+                              msg.isMe 
+                                ? 'bg-blue-600 text-white rounded-tr-none shadow-blue-500/20' 
+                                : 'bg-white text-slate-700 rounded-tl-none border border-slate-100 shadow-slate-200/50'
+                           }`}>
+                              {msg.text}
+                           </div>
+                           <div className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 px-2 ${msg.isMe ? 'justify-end' : 'justify-start'}`}>
+                              <Clock size={10} /> {msg.time}
+                              {msg.isMe && (
+                                 <span className="text-blue-500">
+                                    <CheckCheck size={12} strokeWidth={3} />
+                                 </span>
+                              )}
+                           </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+
+                {/* Input Area */}
+                <div className="p-8 bg-white border-t border-slate-100">
+                  <form onSubmit={handleSendMessage} className="flex items-center gap-4 max-w-4xl mx-auto">
+                    <button type="button" className="p-5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-[1.5rem] transition-all">
+                       <Paperclip size={24} />
+                    </button>
+                    <div className="flex-1 relative">
+                       <input
+                        type="text"
+                        placeholder="Qu'aimeriez-vous savoir d'autre ?"
+                        value={messageText}
+                        onChange={(e) => setMessageText(e.target.value)}
+                        className="w-full pl-6 pr-6 py-5 bg-slate-50 border-2 border-slate-50 rounded-[2rem] text-slate-900 font-bold focus:ring-4 focus:ring-blue-100 focus:border-blue-500 focus:bg-white transition-all outline-none placeholder:text-slate-400"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={!messageText.trim() || sending}
+                      className="p-5 bg-blue-600 text-white rounded-[2rem] shadow-2xl shadow-blue-500/40 hover:bg-blue-700 transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      {sending ? <Loader2 className="animate-spin w-6 h-6" /> : <Send size={24} strokeWidth={2.5} />}
+                    </button>
+                  </form>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-center p-20 text-center">
+                 <div className="relative mb-8">
+                    <div className="absolute inset-0 bg-blue-500/20 rounded-full blur-3xl animate-pulse" />
+                    <div className="w-32 h-32 bg-white rounded-[3rem] border border-slate-50 flex items-center justify-center shadow-2xl relative z-10">
+                       <MessageSquare className="w-14 h-14 text-blue-500/40" strokeWidth={1} />
+                    </div>
+                 </div>
+                 <h3 className="text-3xl font-black text-slate-900 tracking-tight mb-2 uppercase">Sélectionnez un expert</h3>
+                 <p className="text-slate-400 font-medium italic max-w-sm mb-10">Démarrez une conversation exclusive avec nos agences immobilières partenaires.</p>
+                 <Button onClick={() => router.push('/annonces')} className="bg-slate-900 text-white px-10 py-7 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl hover:bg-blue-600 transition-all">
+                    Explorer le catalogue
+                 </Button>
+              </div>
+            )}
+          </motion.div>
+        </div>
       </div>
     </UserLayout>
   );
