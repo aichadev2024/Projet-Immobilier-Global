@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -40,7 +42,7 @@ export default function TypesBiensAdmin() {
     try {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) { router.push("/login"); return; }
-      const res = await fetch("http://localhost:8080/api/type-biens", { headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } });
+      const res = await fetch(`${API_BASE_URL}/api/type-biens`, { headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" } });
       if (res.ok) { setTypesBiens(await res.json()); }
       else if (res.status === 401) { localStorage.removeItem("accessToken"); sessionStorage.removeItem("accessToken"); setTimeout(() => router.push("/login"), 2000); setError("Token expiré. Redirection..."); }
       else { setError(`Erreur ${res.status}: Impossible de charger les types de biens`); }
@@ -57,7 +59,7 @@ export default function TypesBiensAdmin() {
     try {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) { setError("Aucun token"); return; }
-      const url = editingType ? `http://localhost:8080/api/type-biens/${editingType.id}` : "http://localhost:8080/api/type-biens";
+      const url = editingType ? `${API_BASE_URL}/api/type-biens/${editingType.id}` : `${API_BASE_URL}/api/type-biens`;
       const body = { libelle: formData.libelle, modeTarification: "GRATUIT", tarifBase: 0 };
       const res = await fetch(url, { method: editingType ? "PUT" : "POST", headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (res.ok) { await fetchTypesBiens(); resetForm(); setShowModal(false); setSuccess(editingType ? "Mis à jour !" : "Créé !"); setTimeout(() => setSuccess(null), 3000); }
@@ -73,7 +75,7 @@ export default function TypesBiensAdmin() {
     try {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) return;
-      const res = await fetch(`http://localhost:8080/api/type-biens/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
+      const res = await fetch(`${API_BASE_URL}/api/type-biens/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${token}` } });
       if (res.ok) { await fetchTypesBiens(); setSuccess("Supprimé."); setTimeout(() => setSuccess(null), 3000); }
       else { setError(`Erreur ${res.status}`); }
     } catch { setError("Erreur de connexion au serveur"); }

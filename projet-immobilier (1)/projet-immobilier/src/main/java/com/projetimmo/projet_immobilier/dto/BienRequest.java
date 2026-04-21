@@ -33,4 +33,8 @@ public class BienRequest {
 
     @NotNull(message = "Le type de transaction est obligatoire")
     private TransactionType transactionType;
+
+    // Visite payante
+    private Boolean visitePayante;
+    private java.math.BigDecimal tarifVisite;
 }

@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -70,7 +72,7 @@ export default function VerificationsPage() {
 
   const fetchBiensEnAttente = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/biens/en-attente-validation', {
+      const response = await fetch(`${API_BASE_URL}/api/biens/en-attente-validation`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -116,8 +118,8 @@ export default function VerificationsPage() {
 
     try {
       const endpoint = actionType === "approuver" 
-        ? `http://localhost:8080/api/biens/${selectedBien.id}/approuver`
-        : `http://localhost:8080/api/biens/${selectedBien.id}/rejeter`;
+        ? `${API_BASE_URL}/api/biens/${selectedBien.id}/approuver`
+        : `${API_BASE_URL}/api/biens/${selectedBien.id}/rejeter`;
 
       const response = await fetch(endpoint, {
         method: 'POST',

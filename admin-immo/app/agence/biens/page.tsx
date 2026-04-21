@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -99,6 +101,8 @@ interface BienRequest {
   superficie: number;
   prix: number;
   transactionType: "A_VENDRE" | "A_LOUER";
+  visitePayante?: boolean;
+  tarifVisite?: number;
 }
 
 export default function BiensImmobiliers() {
@@ -131,7 +135,9 @@ export default function BiensImmobiliers() {
     longitude: "",
     superficie: 0,
     prix: 0,
-    transactionType: "A_VENDRE"
+    transactionType: "A_VENDRE",
+    visitePayante: false,
+    tarifVisite: 0
   });
 
   useEffect(() => {
@@ -151,7 +157,7 @@ export default function BiensImmobiliers() {
 
   const fetchUserProfile = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -168,7 +174,7 @@ export default function BiensImmobiliers() {
 
   const fetchBiensPublic = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/biens');
+      const response = await fetch(`${API_BASE_URL}/api/biens`);
       if (response.ok) {
         const data = await response.json();
         setBiens(data.success ? data.biens : []);
@@ -188,7 +194,7 @@ export default function BiensImmobiliers() {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       const headers: HeadersInit = token ? { 'Authorization': `Bearer ${token}` } : {};
       
-      const response = await fetch(`http://localhost:8080/api/biens/${bienId}/details`, { headers });
+      const response = await fetch(`${API_BASE_URL}/api/biens/${bienId}/details`, { headers });
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -233,7 +239,7 @@ export default function BiensImmobiliers() {
 
   const fetchTypesBiens = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/type-biens', {
+      const response = await fetch(`${API_BASE_URL}/api/type-biens`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -304,12 +310,15 @@ export default function BiensImmobiliers() {
         prix: newBien.prix,
         // Convertir les coordonnées en nombres pour l'envoi au backend
         latitude: newBien.latitude.trim() === "" ? null : (parseFloat(newBien.latitude) || 0),
-        longitude: newBien.longitude.trim() === "" ? null : (parseFloat(newBien.longitude) || 0)
+        longitude: newBien.longitude.trim() === "" ? null : (parseFloat(newBien.longitude) || 0),
+        // Visite payante
+        visitePayante: newBien.visitePayante || false,
+        tarifVisite: newBien.visitePayante ? (newBien.tarifVisite || 0) : 0
       };
       
       console.log("DEBUG Frontend - bienToSend:", bienToSend);
       
-      const response = await fetch('http://localhost:8080/api/biens', {
+      const response = await fetch(`${API_BASE_URL}/api/biens`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -331,7 +340,9 @@ export default function BiensImmobiliers() {
           longitude: "",
           superficie: 0,
           prix: 0,
-          transactionType: "A_VENDRE"
+          transactionType: "A_VENDRE",
+          visitePayante: false,
+          tarifVisite: 0
         });
         if (token) {
           setRefreshing(true);
@@ -358,7 +369,7 @@ export default function BiensImmobiliers() {
   const fetchBiens = async (token: string) => {
     try {
       // Utiliser l'endpoint /api/biens/agence pour voir tous les biens de l'agence (incluant LOUE et VENDU)
-      const response = await fetch('http://localhost:8080/api/biens/agence', {
+      const response = await fetch(`${API_BASE_URL}/api/biens/agence`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -1134,6 +1145,56 @@ export default function BiensImmobiliers() {
                     0 FCFA
                   </div>
                 </div>
+              </div>
+
+              {/* Visite Payante */}
+              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center">
+                      <Eye className="w-5 h-5 text-indigo-600" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">Visites payantes</h4>
+                      <p className="text-xs text-gray-500">Les clients paient pour visiter ce bien</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewBien({ ...newBien, visitePayante: false, tarifVisite: 0 })}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${!newBien.visitePayante ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      Gratuit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewBien({ ...newBien, visitePayante: true })}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${newBien.visitePayante ? 'bg-indigo-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      Payant
+                    </button>
+                  </div>
+                </div>
+                {newBien.visitePayante && (
+                  <div className="pt-4 border-t border-gray-200">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Tarif par visite (FCFA) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        value={newBien.tarifVisite || ""}
+                        onChange={(e) => setNewBien({ ...newBien, tarifVisite: parseInt(e.target.value) || 0 })}
+                        placeholder="Ex: 5000"
+                        min="1"
+                        className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 font-medium placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-colors"
+                      />
+                      <span className="text-sm text-gray-500 font-medium">FCFA</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Ce montant sera facturé aux clients pour chaque visite de ce bien.</p>
+                  </div>
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

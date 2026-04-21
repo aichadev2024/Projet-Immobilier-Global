@@ -8,6 +8,8 @@ import com.projetimmo.projet_immobilier.entity.RefreshToken;
 import com.projetimmo.projet_immobilier.entity.Role;
 import com.projetimmo.projet_immobilier.entity.Utilisateur;
 import com.projetimmo.projet_immobilier.entity.Verification;
+import com.projetimmo.projet_immobilier.exceptions.BusinessException;
+import com.projetimmo.projet_immobilier.exceptions.ErrorCode;
 import com.projetimmo.projet_immobilier.enums.StatutAgence;
 import com.projetimmo.projet_immobilier.enums.StatutUtilisateur;
 import com.projetimmo.projet_immobilier.enums.StatutVerification;
@@ -128,13 +130,8 @@ public class AuthServiceImpl implements AuthService {
                                         .telephone(request.getTelephoneAgence())
                                         .adresse(request.getAdresseAgence())
                                         .description(request.getDescriptionAgence())
-                                        .numeroLicence(request.getNinea())
+                                        .nina(request.getNina())
                                         .statut(StatutAgence.EN_ATTENTE_VERIFICATION)
-                                        .visitePayante(request.getVisitePayante() != null ? request.getVisitePayante()
-                                                        : false)
-                                        .tarifVisite(request.getVisitePayante() != null && request.getVisitePayante()
-                                                        ? request.getTarifVisite()
-                                                        : null)
                                         .isDeleted(false)
                                         .createdAt(LocalDateTime.now())
                                         .build();
@@ -184,15 +181,18 @@ public class AuthServiceImpl implements AuthService {
 
         @Override
         @Transactional
-        public void registerWithDocuments(EnhancedRegisterRequest request, MultipartFile registreCommerce,
-                        MultipartFile pieceIdentite, MultipartFile licencePro, HttpServletRequest httpRequest) {
+        public void registerWithDocuments(EnhancedRegisterRequest request, MultipartFile rccm,
+                        MultipartFile nif, MultipartFile agrement, MultipartFile pieceIdentite, HttpServletRequest httpRequest) {
 
                 log.info("📄 Inscription avec documents pour l'agence: {}", request.getNomAgence());
 
                 // 🛡️ Vérifier que les documents obligatoires sont présents pour une agence
                 if (request.isAgence()) {
-                        if (registreCommerce == null || registreCommerce.isEmpty()) {
-                                throw new RuntimeException("Le document de registre de commerce/NINEA est obligatoire");
+                        if (rccm == null || rccm.isEmpty()) {
+                                throw new RuntimeException("Le document RCCM ou NINA est obligatoire");
+                        }
+                        if (nif == null || nif.isEmpty()) {
+                                throw new RuntimeException("Le document NIF est obligatoire");
                         }
                         if (pieceIdentite == null || pieceIdentite.isEmpty()) {
                                 throw new RuntimeException("La pièce d'identité du responsable est obligatoire");
@@ -230,9 +230,14 @@ public class AuthServiceImpl implements AuthService {
                 }
 
                 // 📄 Étape 4: Sauvegarder les documents et créer les entrées de vérification
-                if (registreCommerce != null && !registreCommerce.isEmpty()) {
-                        saveDocumentAndCreateVerification(agence, utilisateur, registreCommerce,
-                                        TypeDocumentAgence.REGISTRE_COMMERCE, "Registre de Commerce / NINEA");
+                if (rccm != null && !rccm.isEmpty()) {
+                        saveDocumentAndCreateVerification(agence, utilisateur, rccm,
+                                        TypeDocumentAgence.RCCM, "RCCM ou NINA");
+                }
+
+                if (nif != null && !nif.isEmpty()) {
+                        saveDocumentAndCreateVerification(agence, utilisateur, nif,
+                                        TypeDocumentAgence.NIF, "NIF - Numéro d'Identification Fiscale");
                 }
 
                 if (pieceIdentite != null && !pieceIdentite.isEmpty()) {
@@ -241,9 +246,9 @@ public class AuthServiceImpl implements AuthService {
                                         "Pièce d'identité du responsable");
                 }
 
-                if (licencePro != null && !licencePro.isEmpty()) {
-                        saveDocumentAndCreateVerification(agence, utilisateur, licencePro,
-                                        TypeDocumentAgence.LICENCE_PROFESSIONNELLE, "Licence professionnelle");
+                if (agrement != null && !agrement.isEmpty()) {
+                        saveDocumentAndCreateVerification(agence, utilisateur, agrement,
+                                        TypeDocumentAgence.AGREMENT, "Agrément d'agence immobilière");
                 }
 
                 log.info("✅ Documents sauvegardés et entrées de vérification créées pour l'agence: {}",
@@ -315,7 +320,7 @@ public class AuthServiceImpl implements AuthService {
                                 .or(() -> utilisateurRepository.findByNomUtilisateur(loginId))
                                 .orElseThrow(() -> {
                                         loginAttemptService.recordFailedAttempt(clientIp, loginId);
-                                        return new RuntimeException("Identifiants invalides");
+                                        return new BusinessException("Identifiants invalides", ErrorCode.INVALID_CREDENTIALS);
                                 });
 
                 // Check password
@@ -323,7 +328,7 @@ public class AuthServiceImpl implements AuthService {
                         loginAttemptService.recordFailedAttempt(clientIp, loginId);
                         auditService.logSecurityEvent(com.projetimmo.projet_immobilier.enums.ActionAudit.LOGIN_FAIL,
                                         loginId, "Mot de passe incorrect", clientIp);
-                        throw new RuntimeException("Identifiants invalides");
+                        throw new BusinessException("Identifiants invalides", ErrorCode.INVALID_CREDENTIALS);
                 }
 
                 // Check if enabled - Si compte non activé, OTP obligatoire pour activation
@@ -340,7 +345,12 @@ public class AuthServiceImpl implements AuthService {
                                         : com.projetimmo.projet_immobilier.enums.TypeCodeOTP.EMAIL;
                         System.out.println("🔍 DEBUG login - OTP Type: " + otpType + " (isSimpleUser=" + isSimpleUser
                                         + ")");
-                        otpService.generateAndSendOTP(user, otpType);
+                        try {
+                                otpService.generateAndSendOTP(user, otpType);
+                        } catch (Exception e) {
+                                log.error("Erreur lors de l'envoi de l'OTP: {}", e.getMessage());
+                                throw new BusinessException("Impossible d'envoyer le code de validation (Email/SMS). Veuillez vérifier votre connexion ou votre adresse email.", ErrorCode.INTERNAL_ERROR);
+                        }
                         return java.util.Map.of("status", "PENDING_ACTIVATION", "message",
                                         "Compte non activé. Un code OTP vous a été envoyé par "
                                                         + (isSimpleUser ? "SMS (simulation)" : "email") + ".");
@@ -681,9 +691,9 @@ public class AuthServiceImpl implements AuthService {
                 if (request.getTelephoneAgence() == null || request.getTelephoneAgence().trim().isEmpty()) {
                         throw new RuntimeException("Le téléphone de l'agence est obligatoire");
                 }
-                if (request.getNinea() == null || request.getNinea().trim().isEmpty()
-                                || !request.getNinea().matches("^\\d{9}$")) {
-                        throw new RuntimeException("Le NINEA est obligatoire et doit contenir 9 chiffres");
+                if (request.getNina() == null || request.getNina().trim().isEmpty()
+                                || !request.getNina().matches("^\\d{9}$")) {
+                        throw new RuntimeException("Le NINA est obligatoire et doit contenir 9 chiffres");
                 }
         }
 

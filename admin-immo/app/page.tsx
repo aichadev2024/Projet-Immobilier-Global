@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL, apiFetch } from "@/services/api";
+
 
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -31,6 +33,7 @@ export default function Home() {
   const [ville, setVille] = useState("");
   const [typeTransaction, setTypeTransaction] = useState<"TOUS" | "LOCATION" | "VENTE">("TOUS");
   const [typeBien, setTypeBien] = useState("");
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
@@ -148,24 +151,15 @@ export default function Home() {
     
     try {
       setReservationLoading(true);
-      const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
       
-      const response = await fetch('http://localhost:8080/api/reservations', {
+      await apiFetch("/api/reservations", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
         body: JSON.stringify({
           idBien: selectedBien.id,
           dateDebut: new Date(dateDebut).toISOString(),
           dateFin: new Date(dateFin).toISOString(),
         }),
       });
-
-      if (!response.ok) {
-        throw new Error('Erreur lors de la réservation');
-      }
 
       setShowReservationModal(false);
       alert('Réservation effectuée avec succès ! Elle est en attente de validation par l\'agence.');
@@ -204,66 +198,141 @@ export default function Home() {
             <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse" />
             <span className="text-blue-700 font-bold text-[10px] uppercase tracking-widest">Collection Privée</span>
           </motion.div>
-          <h2 className="text-4xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 tracking-tighter leading-[1.05]">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 tracking-tighter leading-[1.05]">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-slate-900 via-slate-700 to-slate-500">L'immobilier</span> redéfini.
           </h2>
-          <p className="text-slate-500 max-w-2xl text-lg md:text-xl font-medium leading-relaxed">
+          <p className="text-slate-500 max-w-2xl text-base md:text-xl font-medium leading-relaxed">
             Trouvez la résidence qui correspond parfaitement à votre style de vie. Une sélection rigoureuse des biens les plus exclusifs en temps réel.
           </p>
         </div>
 
         {/* Floating Filter Bar */}
-        <div className="sticky top-24 z-[40] mb-16">
-          <div className="bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-[2.5rem] p-3 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] flex flex-col lg:flex-row items-center gap-3 transition-all duration-500 hover:shadow-[0_8px_50px_-12px_rgba(0,0,0,0.15)] mx-auto max-w-6xl">
-            <div className="relative w-full lg:w-auto lg:flex-1">
-              <Search className="absolute left-5 top-4 text-slate-400" size={20} />
-              <input
-                type="text"
-                placeholder="Rechercher (ville, quartier)..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-14 pr-4 py-4 bg-slate-50/80 border border-slate-100 rounded-[2rem] text-sm font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 transition-all placeholder:text-slate-400 placeholder:font-medium outline-none"
-              />
-            </div>
-
-            <div className="hidden lg:flex items-center gap-2 px-4 border-l border-slate-200/60">
-               {["Bamako", "Kati", "Ségou"].map(v => (
-                 <button 
-                  key={v}
-                  onClick={() => setVille(v === ville ? "" : v)}
-                  className={`px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${ville === v ? 'bg-slate-900 text-white shadow-md scale-105' : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
-                 >
-                   {v}
-                 </button>
-               ))}
-            </div>
-
-            <div className="flex items-center gap-2 w-full lg:w-auto px-2">
-              {["TOUS", "VENTE", "LOCATION"].map((type) => (
-                <button
-                  key={type}
-                  onClick={() => setTypeTransaction(type as any)}
-                  className={`flex-1 lg:flex-none px-6 py-4 rounded-[1.75rem] text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
-                    typeTransaction === type ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-105" : "bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-slate-900 border border-slate-100"
-                  }`}
+        <div className="sticky top-24 z-[40] mb-16 mx-auto max-w-6xl px-4">
+          <div className="bg-white/90 backdrop-blur-2xl border border-slate-200/60 rounded-[2rem] sm:rounded-[2.5rem] p-2 sm:p-3 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.1)] transition-all duration-500 hover:shadow-[0_8px_50px_-12px_rgba(0,0,0,0.15)]">
+            <div className="flex flex-col lg:flex-row items-center gap-2">
+              <div className="relative w-full lg:flex-1">
+                <Search className="absolute left-5 top-4 text-slate-400" size={20} />
+                <input
+                  type="text"
+                  placeholder="Rechercher (ville, quartier)..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-14 pr-4 py-4 bg-slate-50/80 border border-slate-100 rounded-[1.5rem] sm:rounded-[2rem] text-sm font-bold text-slate-900 focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-200 transition-all placeholder:text-slate-400 placeholder:font-medium outline-none"
+                />
+                
+                {/* Mobile Filter Toggle */}
+                <button 
+                  onClick={() => setShowMobileFilters(!showMobileFilters)}
+                  className="absolute right-2 top-2 bottom-2 px-4 lg:hidden bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
                 >
-                  {type === "TOUS" ? "Tous" : type === "VENTE" ? "Vente" : "Location"}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h16M4 18h7"/></svg>
+                  {showMobileFilters ? "Fermer" : "Filtres"}
                 </button>
-              ))}
-            </div>
-
-            <div className="w-full lg:w-48 bg-slate-50/80 rounded-[2rem] border border-slate-100 overflow-hidden pr-4 relative focus-within:ring-4 focus-within:ring-blue-500/10 focus-within:border-blue-200 focus-within:bg-white transition-all">
-              <select
-                  value={typeBien}
-                  onChange={(e) => setTypeBien(e.target.value)}
-                  className="w-full pl-5 pr-8 py-4 bg-transparent border-none outline-none appearance-none text-[11px] font-black uppercase tracking-widest text-slate-700 cursor-pointer"
-              >
-                  <option value="">Tous les types</option>
-                  {uniqueTypes.map((t: any) => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
               </div>
+
+              {/* desktop filters (always visible) */}
+              <div className="hidden lg:flex items-center gap-3">
+                <div className="flex items-center gap-2 px-4 border-l border-slate-200/60">
+                   {["Bamako", "Kati", "Ségou"].map(v => (
+                     <button 
+                      key={v}
+                      onClick={() => setVille(v === ville ? "" : v)}
+                      className={`px-5 py-3 rounded-2xl text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${ville === v ? 'bg-slate-900 text-white shadow-md scale-105' : 'bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-900'}`}
+                     >
+                       {v}
+                     </button>
+                   ))}
+                </div>
+
+                <div className="flex items-center gap-2 px-4 border-l border-slate-200/60">
+                  {["TOUS", "VENTE", "LOCATION"].map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setTypeTransaction(type as any)}
+                      className={`px-6 py-4 rounded-[1.75rem] text-[11px] font-black uppercase tracking-wider transition-all duration-300 ${
+                        typeTransaction === type ? "bg-blue-600 text-white shadow-lg" : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                      }`}
+                    >
+                      {type === "TOUS" ? "Tous" : type === "VENTE" ? "Vente" : "Location"}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="w-48 bg-slate-50/80 rounded-[2rem] border border-slate-100 overflow-hidden pr-4 relative">
+                  <select
+                      value={typeBien}
+                      onChange={(e) => setTypeBien(e.target.value)}
+                      className="w-full pl-5 pr-8 py-4 bg-transparent border-none outline-none appearance-none text-[11px] font-black uppercase tracking-widest text-slate-700 cursor-pointer"
+                  >
+                      <option value="">Tous les types</option>
+                      {uniqueTypes.map((t: any) => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                  <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile Filter Collapsible */}
+              <AnimatePresence>
+                {showMobileFilters && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="w-full lg:hidden flex flex-col gap-3 overflow-hidden border-t border-slate-100 mt-2 pt-4 pb-2 px-2"
+                  >
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase text-slate-400 ml-2">Villes</span>
+                      <div className="flex flex-wrap gap-2">
+                        {["Bamako", "Kati", "Ségou"].map(v => (
+                          <button 
+                            key={v}
+                            onClick={() => setVille(v === ville ? "" : v)}
+                            className={`flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${ville === v ? 'bg-slate-900 text-white shadow-md' : 'bg-slate-100 text-slate-500'}`}
+                          >
+                            {v}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase text-slate-400 ml-2">Type de Transaction</span>
+                      <div className="flex flex-wrap gap-2">
+                        {["TOUS", "VENTE", "LOCATION"].map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => setTypeTransaction(type as any)}
+                            className={`flex-1 px-4 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all duration-300 ${
+                              typeTransaction === type ? "bg-blue-600 text-white shadow-lg" : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {type === "TOUS" ? "Tous" : type === "VENTE" ? "Vente" : "Location"}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[10px] font-black uppercase text-slate-400 ml-2">Type de Bien</span>
+                      <div className="w-full bg-slate-100 rounded-xl border border-slate-200 overflow-hidden pr-4 relative">
+                        <select
+                            value={typeBien}
+                            onChange={(e) => setTypeBien(e.target.value)}
+                            className="w-full pl-4 pr-8 py-3 bg-transparent border-none outline-none appearance-none text-[10px] font-black uppercase tracking-widest text-slate-700 font-bold"
+                        >
+                            <option value="">Tous les types</option>
+                            {uniqueTypes.map((t: any) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
@@ -363,22 +432,23 @@ export default function Home() {
 
         {/* Pagination Logic */}
         {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 py-8">
+          <div className="flex justify-center items-center gap-2 sm:gap-3 py-12 sm:py-16">
             <button
               onClick={() => { setCurrentPage(p => Math.max(1, p - 1)); window.scrollTo({top: 0, behavior: 'smooth'}); }}
               disabled={currentPage === 1}
-              className="w-12 h-12 rounded-2xl flex items-center justify-center bg-white border border-slate-200 disabled:opacity-30"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center bg-white border border-slate-200 disabled:opacity-30 active:scale-95 transition-all shadow-sm"
+              aria-label="Page précédente"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={18} />
             </button>
             
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               {[...Array(totalPages)].map((_, i) => (
                 <button
                   key={i}
                   onClick={() => { setCurrentPage(i + 1); window.scrollTo({top: 0, behavior: 'smooth'}); }}
-                  className={`w-12 h-12 rounded-2xl text-xs font-black ${
-                    currentPage === i + 1 ? "bg-blue-600 text-white" : "bg-white text-slate-500 border border-slate-200"
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black transition-all active:scale-95 ${
+                    currentPage === i + 1 ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white text-slate-500 border border-slate-200"
                   }`}
                 >
                   {i + 1}
@@ -389,9 +459,10 @@ export default function Home() {
             <button
               onClick={() => { setCurrentPage(p => Math.min(totalPages, p + 1)); window.scrollTo({top: 0, behavior: 'smooth'}); }}
               disabled={currentPage === totalPages}
-              className="w-12 h-12 rounded-2xl flex items-center justify-center bg-blue-600 text-white disabled:opacity-30"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center bg-blue-600 text-white disabled:opacity-30 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
+              aria-label="Page suivante"
             >
-              <ArrowRight size={20} />
+              <ArrowRight size={18} />
             </button>
           </div>
         )}
@@ -443,7 +514,7 @@ function PropertyCardWithActions({
   });
   
   const imageUrl = bien.images?.[0] ? 
-    (bien.images[0].startsWith("http") ? bien.images[0] : `http://localhost:8080${bien.images[0]}`) 
+    (bien.images[0].startsWith("http") ? bien.images[0] : `${API_BASE_URL}${bien.images[0]}`) 
     : "/images/maison bamako.webp";
   const category = bien.libelleTypeBien || "Bien Immobilier";
   const price = bien.prixCalculer ?? 0;
@@ -530,21 +601,21 @@ function PropertyCardWithActions({
                       </div>
 
           {/* Boutons d'action protégés */}
-          <div className="space-y-2 mt-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5 mt-auto pt-4 border-t border-slate-100">
             <button
               onClick={onContact}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 px-4 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg shadow-blue-600/20 active:scale-95 flex items-center justify-center gap-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 sm:py-2.5 px-4 rounded-xl sm:rounded-2xl transition-all duration-300 font-bold text-xs shadow-lg shadow-blue-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              <MessageCircle size={16} />
-              {isAuthenticated ? "Contacter l'agence" : "Se connecter pour contacter"}
+              <MessageCircle size={14} className="sm:w-4 sm:h-4" />
+              <span className="truncate">{isAuthenticated ? "Contacter" : "Se connecter"}</span>
             </button>
             
             <button
               onClick={onReserve}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2.5 px-4 rounded-xl transition-all duration-300 font-medium text-sm shadow-lg shadow-emerald-600/20 active:scale-95 flex items-center justify-center gap-2"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 sm:py-2.5 px-4 rounded-xl sm:rounded-2xl transition-all duration-300 font-bold text-xs shadow-lg shadow-emerald-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              <Calendar size={16} />
-              {isAuthenticated ? "Réserver ce bien" : "Se connecter pour réserver"}
+              <Calendar size={14} className="sm:w-4 sm:h-4" />
+              <span className="truncate">{isAuthenticated ? "Réserver" : "Réserver"}</span>
             </button>
           </div>
         </div>

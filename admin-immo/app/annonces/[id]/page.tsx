@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -25,7 +27,7 @@ export default function AnnonceDetails() {
 
     const fetchBien = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/biens/${params.id}`);
+        const res = await fetch(`${API_BASE_URL}/api/biens/${params.id}`);
         if (!res.ok) throw new Error("Bien introuvable ou erreur serveur");
         const data = await res.json();
         setBien(data);
@@ -57,7 +59,7 @@ export default function AnnonceDetails() {
     try {
       // POST vers l'API de contacts
       // C'est un endpoint hypothétique, à adapter selon le backend exact
-      const res = await fetch("http://localhost:8080/api/contacts", {
+      const res = await fetch(`${API_BASE_URL}/api/contacts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -109,7 +111,7 @@ export default function AnnonceDetails() {
   }
 
   const imageUrl = bien.images && bien.images.length > 0 
-    ? (bien.images[0].startsWith("http") ? bien.images[0] : `http://localhost:8080${bien.images[0]}`)
+    ? (bien.images[0].startsWith("http") ? bien.images[0] : `${API_BASE_URL}${bien.images[0]}`)
     : "/images/Appartement a sotuba.jpg"; // Fallback image premium
 
   return (

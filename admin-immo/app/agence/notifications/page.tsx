@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import React from "react";
 import {
@@ -26,7 +28,7 @@ export default function AgenceNotifications() {
         const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
         if (!token) return;
         try {
-            const response = await fetch("http://localhost:8080/api/notifications/me", {
+            const response = await fetch(`${API_BASE_URL}/api/notifications/me`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (response.ok) {
@@ -54,7 +56,7 @@ export default function AgenceNotifications() {
     const markAsRead = async (id: string) => {
         const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
         try {
-            await fetch(`http://localhost:8080/api/notifications/${id}/marquer-lu`, {
+            await fetch(`${API_BASE_URL}/api/notifications/${id}/marquer-lu`, {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -67,7 +69,7 @@ export default function AgenceNotifications() {
     const markAllAsRead = async () => {
         const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
         try {
-            await fetch(`http://localhost:8080/api/notifications/marquer-toutes-lues`, {
+            await fetch(`${API_BASE_URL}/api/notifications/marquer-toutes-lues`, {
                 method: "PUT",
                 headers: { "Authorization": `Bearer ${token}` }
             });

@@ -112,21 +112,21 @@ public class VerificationServiceImpl implements VerificationService {
         log.info("Vérification agence: {}", agence.getNom());
 
         // Vérification multi-critères pour les agences
-        boolean critere1 = agence.getNumeroLicence() != null && !agence.getNumeroLicence().trim().isEmpty();
+        boolean critere1 = agence.getNina() != null && !agence.getNina().trim().isEmpty();
         boolean critere2 = agence.getEmail() != null && isValidEmail(agence.getEmail());
         boolean critere3 = agence.getTelephone() != null && isValidTelephone(agence.getTelephone());
         boolean critere4 = agence.getAdresse() != null && !agence.getAdresse().trim().isEmpty();
 
-        // Vérifier que le numéro de licence est unique
-        boolean licenceUnique = true;
-        if (agence.getNumeroLicence() != null) {
-            licenceUnique = !agenceRepository.existsByNumeroLicence(agence.getNumeroLicence()) ||
-                    agenceRepository.findByNumeroLicence(agence.getNumeroLicence())
+        // Vérifier que le NINA est unique
+        boolean ninaUnique = true;
+        if (agence.getNina() != null) {
+            ninaUnique = !agenceRepository.existsByNina(agence.getNina()) ||
+                    agenceRepository.findByNina(agence.getNina())
                             .map(existing -> existing.getId().equals(agence.getId()))
-                            .orElse(false);
+                            .orElse(true);
         }
 
-        boolean verificationReussie = critere1 && critere2 && critere3 && critere4 && licenceUnique;
+        boolean verificationReussie = critere1 && critere2 && critere3 && critere4 && ninaUnique;
 
         if (verificationReussie) {
             log.info("Agence vérifiée avec succès: {}", agence.getNom());

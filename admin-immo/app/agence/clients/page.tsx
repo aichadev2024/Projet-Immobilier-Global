@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import React, { useState } from "react";
 import {
@@ -31,7 +33,7 @@ export default function AgenceClients() {
       const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
       if (!token) return;
       try {
-        const res = await fetch("http://localhost:8080/api/utilisateurs/clients/mes-clients", {
+        const res = await fetch(`${API_BASE_URL}/api/utilisateurs/clients/mes-clients`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (res.ok) {

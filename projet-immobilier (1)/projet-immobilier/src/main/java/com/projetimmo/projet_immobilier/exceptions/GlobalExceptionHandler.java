@@ -111,8 +111,10 @@ public class GlobalExceptionHandler {
 
         log.error("Erreur interne : ", ex);
 
+        String message = ex.getMessage() != null ? ex.getMessage() : "Erreur interne du serveur";
+
         return buildError(
-                "Erreur interne du serveur",
+                message,
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 ErrorCode.INTERNAL_ERROR,
                 request);

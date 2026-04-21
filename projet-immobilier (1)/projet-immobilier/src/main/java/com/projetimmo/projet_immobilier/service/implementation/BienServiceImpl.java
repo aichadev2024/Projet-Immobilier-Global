@@ -123,6 +123,8 @@ public class BienServiceImpl implements BienService {
                 .commentaireVerification(bien.getCommentaireVerification())
                 .caracteristiques(mapToCaracteristiquesInfo(bien.getCaracteristiques()))
                 .superficie(bien.getSuperficie())
+                .visitePayante(bien.getVisitePayante())
+                .tarifVisite(bien.getTarifVisite())
                 .build();
     }
 
@@ -177,8 +179,8 @@ public class BienServiceImpl implements BienService {
                         .telephone(agence.getTelephone())
                         .email(agence.getEmail())
                         .siteWeb(agence.getSiteWeb())
-                        .visitePayante(agence.getVisitePayante())
-                        .tarifVisite(agence.getTarifVisite())
+                        .visitePayante(null)  // Les champs visitePayante/tarifVisite sont maintenant dans Bien
+                        .tarifVisite(null)
                         .build())
                 .build();
     }
@@ -233,8 +235,12 @@ public class BienServiceImpl implements BienService {
                 .prix(request.getPrix())
                 .commission(commission)
                 .prixCalculer(request.getPrix().add(commission))
-                .statutBien(StatutBien.DISPONIBLE) // 🆕 Les biens sont directement disponibles
+                .statutBien(StatutBien.DISPONIBLE) // Les biens sont directement disponibles
                 .transactionType(request.getTransactionType())
+                .visitePayante(request.getVisitePayante() != null ? request.getVisitePayante() : false)
+                .tarifVisite(request.getVisitePayante() != null && request.getVisitePayante()
+                        ? request.getTarifVisite()
+                        : null)
                 .agence(agence)
                 .createdBy(utilisateurConnecte)
                 .build();
@@ -363,6 +369,12 @@ public class BienServiceImpl implements BienService {
             bien.setPrix(request.getPrix());
             bien.setCommission(nouvelleCommission);
             bien.setPrixCalculer(request.getPrix().add(nouvelleCommission));
+        }
+
+        // Mise à jour de la visite payante
+        if (request.getVisitePayante() != null) {
+            bien.setVisitePayante(request.getVisitePayante());
+            bien.setTarifVisite(request.getVisitePayante() ? request.getTarifVisite() : null);
         }
 
         return mapToResponse(bienRepository.save(bien));

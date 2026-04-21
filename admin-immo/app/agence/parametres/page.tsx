@@ -170,7 +170,7 @@ export default function AgenceParametres() {
                                                 { title: "Demandes de visite", desc: "Me notifier par email pour chaque demande de rendez-vous.", defaultChecked: true },
                                                 { title: "Avis Clients", desc: "Être alerté dès qu'un nouvel avis est publié sur la page de mon agence.", defaultChecked: true },
                                                 { title: "Validation d'annonces", desc: "Recevoir la confirmation ou le refus des modérateurs.", defaultChecked: false },
-                                                { title: "Newsletter BamakoHome", desc: "Dernières actualités immobilières et mises à jour du site.", defaultChecked: false },
+                                                { title: "Newsletter IkaBayt", desc: "Dernières actualités immobilières et mises à jour du site.", defaultChecked: false },
                                             ].map((item, i) => (
                                                 <div key={i} className="flex items-start gap-4">
                                                     <div className="pt-1">

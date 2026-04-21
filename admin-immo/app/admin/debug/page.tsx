@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +27,7 @@ export default function DebugPage() {
 
     try {
       // Test 1: Profil utilisateur
-      const profileResponse = await fetch("http://localhost:8080/api/utilisateurs/me", {
+      const profileResponse = await fetch(`${API_BASE_URL}/api/utilisateurs/me`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -41,7 +43,7 @@ export default function DebugPage() {
       }
 
       // Test 2: Stats dashboard
-      const statsResponse = await fetch("http://localhost:8080/api/admin/dashboard/stats", {
+      const statsResponse = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -57,7 +59,7 @@ export default function DebugPage() {
       }
 
       // Test 4: Liste des agences (pour debug)
-      const agencesResponse = await fetch("http://localhost:8080/api/admin/validation/agences", {
+      const agencesResponse = await fetch(`${API_BASE_URL}/api/admin/validation/agences`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -79,7 +81,7 @@ export default function DebugPage() {
 
   const testBackendConnection = async () => {
     try {
-      const response = await fetch("http://localhost:8080/api/utilisateurs/me", {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/me`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json"
@@ -210,7 +212,7 @@ export default function DebugPage() {
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
           <h3 className="text-lg font-semibold text-blue-900 mb-2">📖 Instructions</h3>
           <ol className="list-decimal list-inside space-y-1 text-blue-800">
-            <li>Assurez-vous que le backend Spring Boot tourne sur localhost:8080</li>
+            <li>Assurez-vous que le backend Spring Boot tourne sur {API_BASE_URL}</li>
             <li>Connectez-vous d'abord via la page de login</li>
             <li>Cliquez sur "Test Token" pour vérifier la validité du token</li>
             <li>Cliquez sur "Test Backend" pour vérifier la connexion au backend</li>

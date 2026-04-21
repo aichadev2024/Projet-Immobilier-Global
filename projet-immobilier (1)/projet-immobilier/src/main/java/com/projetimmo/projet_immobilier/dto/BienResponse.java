@@ -46,7 +46,11 @@ public class BienResponse {
     
     // Caractéristiques du bien
     private CaracteristiquesInfo caracteristiques;
-    
+
+    // Visite payante
+    private Boolean visitePayante;
+    private java.math.BigDecimal tarifVisite;
+
     @Data
     @Builder
     @NoArgsConstructor

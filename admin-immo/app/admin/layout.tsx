@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL, apiFetch } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -63,43 +65,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const fetchUserProfile = async () => {
     try {
-      const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+      const userData = await apiFetch("/api/utilisateurs/me");
+      setUser(userData);
+      // Stocker pour usage hors ligne
+      localStorage.setItem("user", JSON.stringify(userData));
+    } catch (error: any) {
+      console.error("Erreur lors du chargement du profil admin:", error);
       
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const response = await fetch("http://localhost:8080/api/utilisateurs/me", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        }
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        // Stocker pour usage hors ligne
-        localStorage.setItem("user", JSON.stringify(userData));
-      } else if (response.status === 401) {
-        // Token invalide - déconnexion propre
-        console.log("Session expirée, redirection vers login");
-        localStorage.removeItem("accessToken");
-        sessionStorage.removeItem("accessToken");
-        localStorage.removeItem("user");
-        router.push("/login");
-        return;
-      } else {
-        console.error("Erreur lors du chargement du profil:", response.status);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la connexion au backend:", error);
-      // En cas d'erreur réseau, on essaie de charger depuis le localStorage
+      // Si c'est une erreur 401, apiFetch s'en est déjà probablement occupé (redirection)
+      // Mais au cas où, on essaie de charger depuis le localStorage pour la résilience
       const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
       if (storedUser) {
         setUser(JSON.parse(storedUser));
+      } else {
+        router.push("/login");
       }
     } finally {
       setLoading(false);
@@ -279,7 +258,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <div className="ml-4">
               <h2 className="text-lg font-bold text-white tracking-tight">Panneau Admin</h2>
-              <p className="text-xs text-indigo-300/80 font-medium tracking-wide">BamakoHome</p>
+              <p className="text-xs text-indigo-300/80 font-medium tracking-wide">IkaBayt</p>
             </div>
           </div>
           <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
@@ -330,14 +309,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-[280px] min-h-screen flex flex-col">
+      <div className="lg:pl-[280px] min-h-screen flex flex-col transition-all duration-300">
         {/* Top bar */}
         <div className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-slate-200">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 -ml-2 rounded-xl hover:bg-slate-100 text-slate-600 transition-colors"
+                className="lg:hidden p-2 -ml-1 rounded-xl bg-white border border-slate-200 text-slate-600 shadow-sm transition-all active:scale-95"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -352,10 +331,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
             </div>
 
-            <div className="flex items-center gap-5">
-              <div className="hidden sm:flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full border border-indigo-100/50 shadow-sm">
-                <div className="w-2 h-2 bg-indigo-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div>
-                <span className="text-xs font-semibold tracking-wide">Système Actif</span>
+            <div className="flex items-center gap-3 md:gap-5">
+              <div className="hidden xs:flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full border border-indigo-100/50 shadow-sm">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div>
+                <span className="text-[10px] sm:text-xs font-semibold tracking-wide">Système Actif</span>
               </div>
 
               <NotificationBell />
@@ -364,7 +343,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         {/* Page content */}
-        <main className="flex-1 p-6 md:p-8 relative">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 relative">
           <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-400/5 rounded-full blur-3xl -mr-40 -mt-40 pointer-events-none"></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-400/5 rounded-full blur-3xl -ml-40 -mb-40 pointer-events-none"></div>
           <div className="max-w-7xl mx-auto relative z-10">

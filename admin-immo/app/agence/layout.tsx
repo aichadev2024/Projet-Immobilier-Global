@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -32,6 +34,7 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
   const router = useRouter();
   const pathname = usePathname();
 
+  // 🔐 Vérification auth - exécute UNE SEULE FOIS au montage
   useEffect(() => {
     const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
     if (!token) {
@@ -41,14 +44,13 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/utilisateurs/me", {
+        const res = await fetch(`${API_BASE_URL}/api/utilisateurs/me`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
         });
         if (!res.ok) {
           if (res.status === 401) {
-            // Token expired or invalid - clean redirect without console error
             localStorage.removeItem("accessToken");
             sessionStorage.removeItem("accessToken");
             localStorage.removeItem("role");
@@ -59,15 +61,9 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
           throw new Error(`HTTP ${res.status}`);
         }
         const data = await res.json();
-        console.log("👤 User data received:", data);
         setUser(data);
-        // Store user role for filtering navigation
         setUserRole(data.role || localStorage.getItem("role") || sessionStorage.getItem("role"));
       } catch (error) {
-        // Only log real errors, not auth redirects
-        if (error instanceof Error && !error.message.includes("redirect")) {
-          console.error("Erreur d'authentification:", error);
-        }
         localStorage.removeItem("accessToken");
         sessionStorage.removeItem("accessToken");
         localStorage.removeItem("role");
@@ -79,7 +75,8 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
     };
 
     fetchProfile();
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 👈 [] = exécute une seule fois, pas de boucle
 
   // Filter navigation based on user role - AGENT cannot see Agents menu
   const allNavigation = [
@@ -104,13 +101,13 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
       current: pathname === "/agence/agents",
       allowedRoles: ["AGENCE"] // Only AGENCE can see Agents
     },
-    {
+    /* {
       name: "Vérifications",
       href: "/agence/verifications",
       icon: ShieldCheck,
       current: pathname === "/agence/verifications",
       allowedRoles: ["AGENCE"] // Only AGENCE can verify biens
-    },
+    }, */
     {
       name: "Biens immobiliers",
       href: "/agence/biens",

@@ -3,12 +3,14 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { getBiens } from '@/services/bienService'
+import { apiFetch } from '@/services/api'
 import { UserLayout } from '../UserLayout'
 import { 
   Building, Home, Search, Filter, Star, Heart, Calendar, 
   MapPin, Phone, Mail, MessageSquare, Bell, Settings, 
   ChevronRight, ArrowRight, Shield, User, LayoutGrid, Wallet, Key,
-  AlertCircle, CheckCircle, CheckCircle2, Sparkles, Clock, Zap, Eye 
+  AlertCircle, CheckCircle, CheckCircle2, Sparkles, Clock, Zap, Eye, EyeOff,
+  Loader2, Lock, X, MessageCircle
 } from "lucide-react";
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,6 +32,33 @@ interface Reservation {
   adresseBien?: string
   // Structure imbriquée legacy en fallback
   bien?: { id: number; libelle: string; ville: string; prixCalculer: number; images: string[] }
+}
+
+interface Bien {
+  id: number
+  libelle: string
+  ville: string
+  prixCalculer: number
+  superficie: number
+  nbChambres: number
+  typeTransaction: string
+  images: string[]
+  libelleTypeBien?: string
+  createdByNom?: string
+  createdByPrenom?: string
+  visitePayante: boolean
+  tarifVisite: number | null
+  utilisateur?: {
+    id: number
+    nom?: string
+    prenom?: string
+    telephone?: string
+    email?: string
+    agence?: {
+      id: number
+      nom?: string
+    }
+  }
 }
 
 // Helper to safely format dates - handles Java LocalDateTime array format [2024, 1, 15, 10, 30, 0]
@@ -98,20 +127,15 @@ function ParametresSection({ user }: { user: any }) {
     if (!token || token === "null" || token === "undefined") return
     try {
       setLoading(true)
-      const response = await fetch('http://localhost:8080/api/utilisateurs/change-password', {
+      await apiFetch("/api/utilisateurs/change-password", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ currentPassword, newPassword })
-      })
-      if (response.ok) {
-        setMessage({ type: 'success', text: 'Mot de passe modifié !' })
-        setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
-      } else {
-        const data = await response.json()
-        setMessage({ type: 'error', text: data.message || 'Erreur' })
-      }
-    } catch {
-      setMessage({ type: 'error', text: 'Erreur serveur' })
+      });
+      
+      setMessage({ type: 'success', text: 'Mot de passe modifié !' })
+      setCurrentPassword(''); setNewPassword(''); setConfirmPassword('')
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || 'Erreur lors de la modification' })
     } finally {
       setLoading(false)
     }
@@ -146,7 +170,7 @@ function ParametresSection({ user }: { user: any }) {
                 {user?.prenom?.[0]}{user?.nom?.[0]}
              </div>
              <CardTitle className="text-xl font-black text-slate-900">{user?.prenom} {user?.nom}</CardTitle>
-             <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mt-1">Client BamakoHome</p>
+             <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mt-1">Client IkaBayt</p>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="space-y-4">
@@ -265,12 +289,12 @@ export default function UserDashboardPage() {
   const [activeSection, setActiveSection] = useState<'dashboard' | 'annonces' | 'reservations' | 'parametres' | 'messagerie' | 'notifications'>('dashboard')
   const [user, setUser] = useState<any>(null)
   const [stats, setStats] = useState<UserStats | null>(null)
-  const [biens, setBiens] = useState<any[]>([])
+  const [biens, setBiens] = useState<Bien[]>([])
   const [reservations, setReservations] = useState<Reservation[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [typeTransaction, setTypeTransaction] = useState<"TOUS" | "LOCATION" | "VENTE">("TOUS")
-  const [selectedBien, setSelectedBien] = useState<any>(null)
+  const [selectedBien, setSelectedBien] = useState<Bien | null>(null)
   const [showContactModal, setShowContactModal] = useState(false)
   const [showReservationModal, setShowReservationModal] = useState(false)
   const [contactLoading, setContactLoading] = useState(false)
@@ -281,19 +305,21 @@ export default function UserDashboardPage() {
     if (!token || token === "null" || token === "undefined") { router.push('/login'); return }
     const fetchData = async () => {
       try {
-        const [resUser, resStats, biensData, resReservations] = await Promise.all([
-          fetch('http://localhost:8080/api/utilisateurs/me', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('http://localhost:8080/api/stats/utilisateur', { headers: { 'Authorization': `Bearer ${token}` } }),
+        const [userData, statsData, biensData, reservationsData] = await Promise.all([
+          apiFetch("/api/utilisateurs/me"),
+          apiFetch("/api/stats/utilisateur").catch(() => null),
           getBiens(),
-          fetch('http://localhost:8080/api/reservations/utilisateur', { headers: { 'Authorization': `Bearer ${token}` } })
+          apiFetch("/api/reservations/utilisateur").catch(() => [])
         ])
-        if (!resUser.ok) throw new Error('Non autorisé')
-        setUser(await resUser.json())
-        if (resStats.ok) setStats({ ...(await resStats.json()), derniereVisite: "Aujourd'hui", scoreProfil: 100 })
+
+        if (userData) setUser(userData)
+        if (statsData) setStats({ ...statsData, derniereVisite: "Aujourd'hui", scoreProfil: 100 })
         setBiens(biensData || [])
-        if (resReservations.ok) setReservations((await resReservations.json()) || [])
-      } catch { router.push('/login') } 
-      finally { setLoading(false) }
+        setReservations(reservationsData || [])
+      } catch (error) { 
+        console.error("Dashboard error:", error)
+        router.push('/login') 
+      } finally { setLoading(false) }
     }
     fetchData()
   }, [router])
@@ -306,21 +332,21 @@ export default function UserDashboardPage() {
 
   const handleReservationSubmit = async (dateVisite: string) => {
     if (!selectedBien) return
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
     try {
       setReservationLoading(true)
-      const res = await fetch('http://localhost:8080/api/reservations', {
+      await apiFetch("/api/reservations", {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ idBien: selectedBien.id, dateVisite: new Date(dateVisite).toISOString() })
       })
-      if (!res.ok) throw new Error('Erreur')
+
       setShowReservationModal(false)
       alert('Demande de visite effectuée avec succès !')
-      const resRes = await fetch('http://localhost:8080/api/reservations/utilisateur', { headers: { 'Authorization': `Bearer ${token}` } })
-      if (resRes.ok) setReservations(await resRes.json())
-    } catch { alert('Erreur réservation') }
-    finally { setReservationLoading(false) }
+      
+      const resData = await apiFetch("/api/reservations/utilisateur");
+      setReservations(resData || [])
+    } catch (error: any) { 
+      alert(error.message || 'Erreur réservation') 
+    } finally { setReservationLoading(false) }
   }
 
   const handleContactSubmit = async (message: string) => {
@@ -328,7 +354,7 @@ export default function UserDashboardPage() {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
     try {
       setContactLoading(true)
-      const res = await fetch('http://localhost:8080/api/contacts', {
+      const res = await fetch(`${API_BASE_URL}/api/contacts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ idBien: selectedBien.id, message })
@@ -633,7 +659,7 @@ export default function UserDashboardPage() {
                 >
                   <div className="relative aspect-[4/3] overflow-hidden m-4 rounded-[2rem]">
                     <img 
-                      src={bien.images?.[0] ? (bien.images[0].startsWith("http") ? bien.images[0] : `http://localhost:8080${bien.images[0]}`) : "/images/maison bamako.webp"} 
+                      src={bien.images?.[0] ? (bien.images[0].startsWith("http") ? bien.images[0] : `${API_BASE_URL}${bien.images[0]}`) : "/images/maison bamako.webp"} 
                       alt={bien.libelle} 
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
                     />
@@ -709,15 +735,15 @@ export default function UserDashboardPage() {
                       </div>
                     </div>
                     
-                    {/* Indicateur visite payante/gratuite */}
+                    {/* Indicateur visite payante/gratuite - basé sur le bien, pas l'agence */}
                     <div className="mt-3">
-                      {bien.utilisateur?.agence?.visitePayante ? (
+                      {bien.visitePayante ? (
                         <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                           <AlertCircle size={14} className="text-amber-600 flex-shrink-0" />
                           <div className="flex-1">
                             <span className="text-[10px] font-bold text-amber-800">Visite payante</span>
                             <span className="text-[10px] text-amber-700 ml-1">
-                              {bien.utilisateur.agence.tarifVisite?.toLocaleString()} FCFA
+                              {bien.tarifVisite?.toLocaleString()} FCFA
                             </span>
                           </div>
                         </div>
@@ -807,7 +833,7 @@ export default function UserDashboardPage() {
                     <div className="w-full sm:w-40 h-40 bg-gradient-to-br from-slate-50 to-white rounded-[2rem] flex-shrink-0 overflow-hidden relative border border-slate-100 shadow-inner group-hover:scale-105 transition-all duration-500">
                         {r.bien?.images?.[0] ? (
                            <img 
-                             src={r.bien.images[0].startsWith("http") ? r.bien.images[0] : `http://localhost:8080${r.bien.images[0]}`} 
+                             src={r.bien.images[0].startsWith("http") ? r.bien.images[0] : `${API_BASE_URL}${r.bien.images[0]}`} 
                              className="w-full h-full object-cover" 
                              alt="Propriété" 
                            />
@@ -952,10 +978,16 @@ export default function UserDashboardPage() {
                  <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
                     <p className="text-xs font-bold text-slate-400 mb-1">BIEN SÉLECTIONNÉ</p>
                     <p className="font-black text-slate-800 line-clamp-1">{selectedBien.libelle}</p>
-                    {selectedBien.utilisateur?.agence?.visitePayante && (
+                    {selectedBien.visitePayante ? (
                        <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
                            <p className="text-amber-800 text-[11px] leading-tight font-bold">
-                               ⚠️ Cette agence applique des frais de visite de <span className="font-black text-amber-900">{selectedBien.utilisateur.agence.tarifVisite} FCFA</span>, généralement à prévoir sur place.
+                               ⚠️ Visite payante : <span className="font-black text-amber-900">{selectedBien.tarifVisite?.toLocaleString()} FCFA</span>, généralement à prévoir sur place.
+                           </p>
+                       </div>
+                    ) : (
+                       <div className="mt-4 p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                           <p className="text-emerald-800 text-[11px] leading-tight font-bold">
+                               ✓ Visite gratuite
                            </p>
                        </div>
                     )}

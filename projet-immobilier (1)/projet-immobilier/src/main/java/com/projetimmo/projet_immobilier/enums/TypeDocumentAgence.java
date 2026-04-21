@@ -1,6 +1,14 @@
 package com.projetimmo.projet_immobilier.enums;
 
 public enum TypeDocumentAgence {
+    // Documents principaux pour l'inscription
+    RCCM,                        // Registre du Commerce et du Crédit Mobilier
+    NIF,                         // Numéro d'Identification Fiscale
+    NINA,                        // Numéro d'Identification Nationale
+    AGREMENT,                    // Agrément d'agence immobilière
+    PIECE_IDENTITE_RESPONSABLE,  // Pièce d'identité du responsable
+
+    // Autres documents (gardés pour compatibilité)
     LICENCE_PROFESSIONNELLE,
     CARTE_PROFESSIONNELLE,
     REGISTRE_COMMERCE,
@@ -8,7 +16,6 @@ public enum TypeDocumentAgence {
     STATUTS_JURIDIQUES,
     ATTESTATION_ASSURANCE,
     ATTESTATION_FISCALE,
-    PIECE_IDENTITE_RESPONSABLE,
     PIECES_IDENTITE_DIRIGEANT,
     JUSTIFICATIF_DOMICILE,
     RIB,

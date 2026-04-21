@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
 import BrandMark from "@/components/vitrine/BrandMark";
+import { API_BASE_URL, apiFetch } from "@/services/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,22 +22,13 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:8080/auth/login", {
+      const data = await apiFetch("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
         body: JSON.stringify({
           username,
           password,
         }),
       });
-
-      if (!res.ok) {
-        throw new Error("Identifiants invalides");
-      }
-
-      const data = await res.json();
 
       // Si compte non activé, redirection vers validation OTP
       if (data.status === "PENDING_ACTIVATION") {
@@ -63,7 +55,10 @@ export default function LoginPage() {
       }
 
       // Vérifier que les tokens sont présents
-      if (!data.access_token) {
+      const accessToken = data.access_token || data.accessToken;
+      const refreshToken = data.refresh_token || data.refreshToken;
+
+      if (!accessToken) {
         throw new Error("Token non reçu du serveur");
       }
 
@@ -71,12 +66,12 @@ export default function LoginPage() {
 
       // 🔐 Stockage
       if (remember) {
-        localStorage.setItem("accessToken", data.access_token);
-        localStorage.setItem("refreshToken", data.refresh_token);
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("refreshToken", refreshToken || "");
         localStorage.setItem("role", role);
       } else {
-        sessionStorage.setItem("accessToken", data.access_token);
-        sessionStorage.setItem("refreshToken", data.refresh_token);
+        sessionStorage.setItem("accessToken", accessToken);
+        sessionStorage.setItem("refreshToken", refreshToken || "");
         sessionStorage.setItem("role", role);
       }
 

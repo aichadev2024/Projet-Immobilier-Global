@@ -61,6 +61,14 @@ public class Bien {
     @Column(name = "commentaire_verification", columnDefinition = "TEXT")
     private String commentaireVerification;
 
+    // 💰 Visite payante
+    @Builder.Default
+    @Column(name = "visite_payante")
+    private Boolean visitePayante = false;
+
+    @Column(name = "tarif_visite", precision = 15, scale = 2)
+    private BigDecimal tarifVisite;
+
     @Builder.Default
     private Boolean isDeleted = false;
 

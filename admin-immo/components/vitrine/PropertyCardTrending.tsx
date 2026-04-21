@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -18,7 +20,7 @@ const localHeroImages = [
 function getImageUrl(bien: any, index: number = 0) {
   if (bien.images?.length > 0) {
     const url = bien.images[0];
-    return url.startsWith("http") ? url : `http://localhost:8080${url}`;
+    return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
   }
   // Fallback sur images locales
   return localHeroImages[index % localHeroImages.length] || fallbackImage;

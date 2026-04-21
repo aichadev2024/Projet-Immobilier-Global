@@ -1,26 +1,13 @@
+import { API_BASE_URL, apiFetch } from "@/services/api";
 export async function getBiens() {
   try {
-    console.log("Appel API: http://localhost:8080/api/biens");
-    const res = await fetch("http://localhost:8080/api/biens", {
+    const data = await apiFetch("/api/biens", { 
       cache: "no-store",
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      authenticated: false 
     });
-
-    console.log("Réponse API:", res.status, res.statusText);
-
-    if (!res.ok) {
-      console.error("Erreur HTTP:", res.status, res.statusText);
-      if (res.status === 404) {
-        console.log("Aucun bien trouvé (404), retour tableau vide");
-        return [];
-      }
-      throw new Error(`Erreur HTTP: ${res.status} - ${res.statusText}`);
-    }
-
-    const data = await res.json();
-    console.log("Données reçues:", data);
+    
+    // Si data est null ou non défini, retourner tableau vide
+    if (!data) return [];
     
     const realBiensRaw = data.biens || (Array.isArray(data) ? data : []);
     
@@ -28,6 +15,10 @@ export async function getBiens() {
       const originalTransaction = bien.typeTransaction || bien.transactionType;
       const normalizedTransaction = normalizeTransaction(originalTransaction);
       
+      // Log pour debug visite payante
+      if (index < 5) {
+        console.log(`Bien ${bien.id} - visitePayante:`, bien.visitePayante, "tarifVisite:", bien.tarifVisite);
+      }
       if (index < 3) {
         console.log(`Normalisation bien ${bien.id}:`, originalTransaction, "->", normalizedTransaction);
         console.log(`Données agence pour bien ${bien.id}:`, JSON.stringify(bien.utilisateur, null, 2));
@@ -42,14 +33,10 @@ export async function getBiens() {
         nbSalles: bien.nbSalles || bien.caracteristiques?.nbSallesDeBain || 0,
         superficie: bien.superficie || bien.caracteristiques?.superficie || 0,
         parking: bien.parking || bien.caracteristiques?.nbParking > 0 || false,
+        visitePayante: bien.visitePayante || false,
+        tarifVisite: bien.tarifVisite || null,
         isDemo: false,
       };
-      
-      // Forcer visite payante sur le premier bien pour test
-      if (index === 0 && testBien.utilisateur?.agence) {
-        testBien.utilisateur.agence.visitePayante = true;
-        testBien.utilisateur.agence.tarifVisite = 10000;
-      }
       
       return testBien;
     });
@@ -65,26 +52,7 @@ export async function getBiens() {
 // Récupérer tous les biens pour admin (incluant LOUE et VENDU)
 export async function getBiensAdmin() {
   try {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    console.log("Appel API Admin: http://localhost:8080/api/biens/admin");
-    const res = await fetch("http://localhost:8080/api/biens/admin", {
-      cache: "no-store",
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
-    });
-
-    if (!res.ok) {
-      console.error("Erreur HTTP admin:", res.status, res.statusText);
-      if (res.status === 403) {
-        console.log("Accès refusé - fallback vers endpoint public");
-        return getBiens();
-      }
-      throw new Error(`Erreur HTTP: ${res.status}`);
-    }
-
-    const data = await res.json();
+    const data = await apiFetch("/api/biens/admin", { cache: "no-store" });
     const biensRaw = data.biens || [];
     
     return biensRaw.map((bien: any) => ({
@@ -105,22 +73,7 @@ export async function getBiensAdmin() {
 // Récupérer les biens de l'agence connectée (tous les biens de l'agence)
 export async function getBiensAgence() {
   try {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    console.log("Appel API Agence: http://localhost:8080/api/biens/agence");
-    const res = await fetch("http://localhost:8080/api/biens/agence", {
-      cache: "no-store",
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : '',
-      },
-    });
-
-    if (!res.ok) {
-      console.error("Erreur HTTP agence:", res.status, res.statusText);
-      throw new Error(`Erreur HTTP: ${res.status}`);
-    }
-
-    const data = await res.json();
+    const data = await apiFetch("/api/biens/agence", { cache: "no-store" });
     const biensRaw = data.biens || [];
     
     return biensRaw.map((bien: any) => ({

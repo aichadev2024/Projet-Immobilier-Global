@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+import { apiFetch } from "@/services/api";
 
 export interface AgenceDashboardStats {
   biensTotal: number;
@@ -23,51 +23,16 @@ export interface BienLoue {
 }
 
 class AgenceDashboardAPI {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    };
-  }
-
   async getStats(): Promise<AgenceDashboardStats> {
-    const response = await fetch(`${API_BASE_URL}/api/agence/dashboard/stats`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-
-    return response.json();
+    return apiFetch("/api/agence/dashboard/stats");
   }
 
   async getProprietes(): Promise<AgenceProperty[]> {
-    const response = await fetch(`${API_BASE_URL}/api/agence/dashboard/proprietes`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-
-    return response.json();
+    return apiFetch("/api/agence/dashboard/proprietes");
   }
 
   async getBiensLoues(): Promise<BienLoue[]> {
-    const response = await fetch(`${API_BASE_URL}/api/agence/dashboard/biens-loues`, {
-      method: 'GET',
-      headers: this.getAuthHeaders(),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP: ${response.status}`);
-    }
-
-    return response.json();
+    return apiFetch("/api/agence/dashboard/biens-loues");
   }
 }
 

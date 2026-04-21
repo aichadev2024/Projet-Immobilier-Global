@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -83,7 +85,7 @@ export default function AgenceMedias() {
     try {
       console.log('🔍 MÉDIAS - Début fetchMedias avec token:', token ? '✅ Token présent' : '❌ Token manquant');
       
-      const response = await fetch('http://localhost:8080/api/medias', {
+      const response = await fetch(`${API_BASE_URL}/api/medias`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -129,7 +131,7 @@ export default function AgenceMedias() {
 
   const fetchBiens = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/biens', {
+      const response = await fetch(`${API_BASE_URL}/api/biens`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -172,7 +174,7 @@ export default function AgenceMedias() {
         formData.append('files', file);
       });
 
-      const response = await fetch('http://localhost:8080/api/medias/upload', {
+      const response = await fetch(`${API_BASE_URL}/api/medias/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -215,7 +217,7 @@ export default function AgenceMedias() {
 
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken') || '';
-      const response = await fetch(`http://localhost:8080/api/medias/${mediaId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/medias/${mediaId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

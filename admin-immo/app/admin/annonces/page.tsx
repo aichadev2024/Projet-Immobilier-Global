@@ -15,6 +15,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from "lucide-react";
+import { API_BASE_URL } from "@/services/api";
 
 interface Annonce {
   id: string;
@@ -56,7 +57,7 @@ export default function AnnoncesPage() {
 
       console.log("📡 Récupération des annonces depuis le backend...");
       
-      const response = await fetch("http://localhost:8080/api/annonces", {
+      const response = await fetch(`${API_BASE_URL}/api/annonces`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -160,7 +161,7 @@ export default function AnnoncesPage() {
       console.log(`✅ Validation de l'annonce ${annonceId}...`);
       
       // Pour l'instant, on simule l'action (à implémenter dans le backend)
-      // const response = await fetch(`http://localhost:8080/api/annonces/${annonceId}/valider`, {
+      // const response = await fetch(`${API_BASE_URL}/api/annonces/${annonceId}/valider`, {
       //   method: "PUT",
       //   headers: {
       //     "Authorization": `Bearer ${token}`,
@@ -201,7 +202,7 @@ export default function AnnoncesPage() {
       console.log(`❌ Refus de l'annonce ${annonceId}...`);
       
       // Pour l'instant, on simule l'action (à implémenter dans le backend)
-      // const response = await fetch(`http://localhost:8080/api/annonces/${annonceId}/refuser`, {
+      // const response = await fetch(`${API_BASE_URL}/api/annonces/${annonceId}/refuser`, {
       //   method: "PUT",
       //   headers: {
       //     "Authorization": `Bearer ${token}`,
@@ -239,7 +240,7 @@ export default function AnnoncesPage() {
 
       console.log(`🗑️ Suppression de l'annonce ${annonceId}...`);
       
-      const response = await fetch(`http://localhost:8080/api/annonces/${annonceId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/annonces/${annonceId}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -338,93 +339,64 @@ export default function AnnoncesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Annonces
           </h1>
-          <p className="mt-2 text-gray-600">
+          <p className="mt-1 text-sm text-slate-500">
             Validez et gérez toutes les annonces de la plateforme
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+        <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 active:scale-95">
           <Megaphone className="w-4 h-4" />
-          Nouvelle annonce
+          <span className="text-sm font-semibold">Nouvelle annonce</span>
         </button>
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Megaphone className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">En attente</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.enAttente}</p>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <Calendar className="w-6 h-6 text-yellow-600" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {[
+          { label: "Total", value: stats.total, color: "from-blue-600 to-indigo-600", bg: "bg-blue-50 border-blue-200", icon: Megaphone },
+          { label: "En attente", value: stats.enAttente, color: "from-amber-500 to-orange-600", bg: "bg-amber-50 border-amber-200", icon: Calendar },
+          { label: "Validées", value: stats.validees, color: "from-emerald-500 to-teal-600", bg: "bg-emerald-50 border-emerald-200", icon: CheckCircle },
+          { label: "Rejetées", value: stats.rejetees, color: "from-red-500 to-pink-600", bg: "bg-red-50 border-red-200", icon: XCircle },
+        ].map((s) => (
+          <div key={s.label} className={`bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-sm border ${s.bg} transition-all hover:shadow-md`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-wider">{s.label}</p>
+                <p className={`text-xl sm:text-2xl font-black ${s.label === "Total" ? "bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent" : "text-slate-900"}`}>{s.value}</p>
+              </div>
+              <div className={`p-2 sm:p-3 bg-gradient-to-br ${s.color} rounded-xl shadow-lg`}>
+                <s.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Validées</p>
-              <p className="text-2xl font-bold text-green-600">{stats.validees}</p>
-            </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Rejetées</p>
-              <p className="text-2xl font-bold text-red-600">{stats.rejetees}</p>
-            </div>
-            <div className="p-3 bg-red-100 rounded-lg">
-              <XCircle className="w-6 h-6 text-red-600" />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Filtres et recherche */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+        <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher une annonce..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="pl-10 pr-4 py-2.5 w-full bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-sm"
               />
             </div>
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex flex-wrap sm:flex-nowrap gap-2">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm appearance-none cursor-pointer"
             >
               <option value="TOUS">Tous les statuts</option>
               <option value="EN_ATTENTE">En attente</option>
@@ -435,7 +407,7 @@ export default function AnnoncesPage() {
             <select
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="flex-1 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-sm appearance-none cursor-pointer"
             >
               <option value="TOUS">Tous les types</option>
               <option value="VENTE">Vente</option>
@@ -450,24 +422,21 @@ export default function AnnoncesPage() {
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Annonce
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Bien concerné
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden sm:table-cell px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Agence
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="hidden xl:table-cell px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -483,29 +452,34 @@ export default function AnnoncesPage() {
               ) : (
                 filteredAnnonces.map((annonce) => (
                   <tr key={annonce.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-4">
                       <div>
-                        <div className="font-medium text-gray-900">{annonce.titre}</div>
-                        <div className="text-sm text-gray-500 mt-1 line-clamp-2">
-                          {annonce.description}
+                        <div className="font-bold text-slate-900 text-sm">{annonce.titre}</div>
+                        <div className="text-[10px] sm:text-xs text-slate-500 mt-1 line-clamp-1 sm:line-clamp-2 italic">
+                          {annonce.bienTitre}
                         </div>
-                        {annonce.prix && (
-                          <div className="text-sm font-medium text-gray-900 mt-2">
-                            {formatPrice(annonce.prix)}
-                          </div>
-                        )}
+                        <div className="flex items-center gap-2 mt-2">
+                           <span className={`inline-flex items-center px-1.5 py-0.5 text-[9px] font-black rounded border ${getTypeBadge(annonce.type)}`}>
+                             {annonce.type === 'VENTE' ? 'Vente' : annonce.type === 'LOCATION' ? 'Loc.' : 'L-V'}
+                           </span>
+                           {annonce.prix && (
+                             <div className="text-xs font-black text-indigo-600">
+                               {formatPrice(annonce.prix)}
+                             </div>
+                           )}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Home className="w-4 h-4 text-gray-400" />
-                        <span>{annonce.bienTitre}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getTypeBadge(annonce.type)}`}>
+                    <td className="hidden lg:table-cell px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-1 text-xs font-bold rounded-lg border ${getTypeBadge(annonce.type)}`}>
                         {annonce.type === 'VENTE' ? 'Vente' : annonce.type === 'LOCATION' ? 'Location' : 'Location-Vente'}
                       </span>
+                    </td>
+                    <td className="hidden sm:table-cell px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                        <Building className="w-4 h-4 text-indigo-400" />
+                        <span className="truncate max-w-[120px]">{annonce.agenceNom}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -559,27 +533,27 @@ export default function AnnoncesPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between bg-white rounded-xl shadow-lg p-4">
-          <div className="text-sm text-gray-600">
-            Page {currentPage} sur {totalPages}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/90 backdrop-blur-xl rounded-2xl shadow-sm border border-slate-200 p-4">
+          <div className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-wider">
+            Page <span className="text-indigo-600">{currentPage}</span> sur {totalPages}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setCurrentPage(currentPage - 1)}
               disabled={currentPage === 1}
-              className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              className="p-2.5 rounded-xl border border-slate-200 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-indigo-50 hover:border-indigo-200 transition-all active:scale-90"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4 text-slate-600" />
             </button>
-            <span className="px-3 py-1 text-sm font-medium text-gray-700">
+            <div className="w-10 h-10 flex items-center justify-center rounded-xl bg-indigo-50 border border-indigo-100 text-sm font-black text-indigo-600">
               {currentPage}
-            </span>
+            </div>
             <button
               onClick={() => setCurrentPage(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              className="p-2.5 rounded-xl border border-slate-200 disabled:opacity-30 disabled:cursor-not-allowed hover:bg-indigo-50 hover:border-indigo-200 transition-all active:scale-90"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-4 h-4 text-slate-600" />
             </button>
           </div>
         </div>

@@ -35,8 +35,6 @@ public interface AgenceService {
 
     boolean existsByTelephone(String telephone);
 
-    boolean existsByNumeroLicence(String numeroLicence);
-
     Agence verifierAgence(UUID id);
 
     Agence suspendreAgence(UUID id);

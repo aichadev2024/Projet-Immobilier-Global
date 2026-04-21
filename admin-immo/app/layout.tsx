@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BamakoHome | Immobilier au Mali",
-  description: "La référence immobilière au Mali. Trouvez votre bien idéal avec BamakoHome.",
+  title: "IkaBayt | Immobilier au Mali",
+  description: "La référence immobilière au Mali. Trouvez votre bien idéal avec IkaBayt.",
 };
 
 export default function RootLayout({

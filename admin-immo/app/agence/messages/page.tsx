@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import React, { useState } from "react";
 import {
@@ -53,7 +55,7 @@ export default function AgenceMessages() {
     const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:8080/api/contacts/agence/recus", {
+      const res = await fetch(`${API_BASE_URL}/api/contacts/agence/recus`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (res.ok) {
@@ -125,7 +127,7 @@ export default function AgenceMessages() {
   const markAsReadAndRefresh = async (contactId: string) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
     try {
-      await fetch(`http://localhost:8080/api/contacts/${contactId}/marquer-lu`, {
+      await fetch(`${API_BASE_URL}/api/contacts/${contactId}/marquer-lu`, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${token}` }
       });
@@ -139,7 +141,7 @@ export default function AgenceMessages() {
 
     const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
     try {
-      const res = await fetch(`http://localhost:8080/api/contacts/${selectedContact.id}/repondre`, {
+      const res = await fetch(`${API_BASE_URL}/api/contacts/${selectedContact.id}/repondre`, {
         method: "PUT",
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ reponse: messageText })

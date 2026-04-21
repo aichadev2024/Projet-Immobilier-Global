@@ -180,7 +180,7 @@ export default function NotificationsPage() {
     }
 
     try {
-      const res = await fetch('http://localhost:8080/api/notifications/me', {
+      const res = await fetch(`${API_BASE_URL}/api/notifications/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -204,7 +204,7 @@ export default function NotificationsPage() {
   const markAsRead = async (notificationId: number) => {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
     try {
-      await fetch(`http://localhost:8080/api/notifications/${notificationId}/marquer-lu`, {
+      await fetch(`${API_BASE_URL}/api/notifications/${notificationId}/marquer-lu`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -219,7 +219,7 @@ export default function NotificationsPage() {
     try {
       await Promise.all(
         notifications.filter(n => !n.isRead).map(n =>
-          fetch(`http://localhost:8080/api/notifications/${n.id}/marquer-lu`, {
+          fetch(`${API_BASE_URL}/api/notifications/${n.id}/marquer-lu`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${token}` }
           })
@@ -234,7 +234,7 @@ export default function NotificationsPage() {
   const deleteNotification = async (notificationId: number) => {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
     try {
-      await fetch(`http://localhost:8080/api/notifications/${notificationId}`, {
+      await fetch(`${API_BASE_URL}/api/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })

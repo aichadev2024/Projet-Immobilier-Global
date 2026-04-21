@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import Link from "next/link";
 
@@ -7,7 +9,7 @@ const fallbackImage = "https://images.unsplash.com/photo-1560518883-ce09059eeffa
 function getImageUrl(annonce: any) {
   if (annonce.images?.length > 0) {
     const url = annonce.images[0];
-    return url.startsWith("http") ? url : `http://localhost:8080${url}`;
+    return url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
   }
   return fallbackImage;
 }

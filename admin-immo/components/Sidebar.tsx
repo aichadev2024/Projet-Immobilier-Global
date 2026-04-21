@@ -12,6 +12,7 @@ import {
   LogOut,
   User
 } from "lucide-react";
+import { API_BASE_URL } from "@/services/api";
 
 interface SidebarProps {
   user: any;
@@ -68,7 +69,7 @@ export default function Sidebar({ user, logout }: SidebarProps) {
             <Image
               src={
                 user?.photoProfil
-                  ? `http://localhost:8080/uploads/${user.photoProfil}`
+                  ? `${API_BASE_URL}/uploads/${user.photoProfil}`
                   : "/default-avatar.png"
               }
               alt="Avatar"

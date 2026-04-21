@@ -1,4 +1,6 @@
 'use client';
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -21,7 +23,7 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:8080/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

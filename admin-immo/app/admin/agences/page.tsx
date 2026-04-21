@@ -17,6 +17,7 @@ import {
   Download,
   Loader2
 } from "lucide-react";
+import { API_BASE_URL } from "@/services/api";
 
 interface Agence {
   id: string;
@@ -41,6 +42,7 @@ export default function AgencesPage() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [documents, setDocuments] = useState<any[]>([]);
   const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<{url: string, type: string, name: string} | null>(null);
 
   useEffect(() => {
     fetchAgences();
@@ -58,7 +60,7 @@ export default function AgencesPage() {
 
       console.log("📡 Récupération des agences depuis le backend...");
       
-      const response = await fetch("http://localhost:8080/api/admin/validation/agences", {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -142,7 +144,7 @@ export default function AgencesPage() {
 
       console.log(`✅ Validation de l'agence ${agenceId}...`);
       
-      const response = await fetch(`http://localhost:8080/api/admin/validation/agences/${agenceId}/valider`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences/${agenceId}/valider`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -189,7 +191,7 @@ export default function AgencesPage() {
 
       console.log(`❌ Refus de l'agence ${agenceId}...`);
       
-      const response = await fetch(`http://localhost:8080/api/admin/validation/agences/${agenceId}/refuser`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences/${agenceId}/refuser`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -233,7 +235,7 @@ export default function AgencesPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:8080/api/admin/validation/agences/${utilisateurId}/documents`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences/${utilisateurId}/documents`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -263,7 +265,7 @@ export default function AgencesPage() {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8080/api/admin/validation/documents/${documentId}/approuver`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/documents/${documentId}/approuver`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -292,7 +294,7 @@ export default function AgencesPage() {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8080/api/admin/validation/documents/${documentId}/rejeter`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/documents/${documentId}/rejeter`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -313,6 +315,50 @@ export default function AgencesPage() {
     }
   };
 
+  // Prévisualiser un document (ouvrir dans un nouvel onglet pour les images/PDF)
+  const handlePreviewDocument = async (documentId: string, docType: string) => {
+    const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+    if (!token) {
+      alert("❌ Veuillez vous reconnecter");
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/documents/${documentId}/download`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Erreur lors du chargement");
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Détecter le type de fichier
+      const contentType = response.headers.get('content-type') || 'application/octet-stream';
+      const isImage = contentType.startsWith('image/');
+      const isPDF = contentType === 'application/pdf';
+      
+      if (isImage || isPDF) {
+        // Pour les images et PDF, ouvrir dans une modal
+        setPreviewDoc({
+          url,
+          type: contentType,
+          name: docType
+        });
+      } else {
+        // Pour les autres fichiers, télécharger directement
+        handleDownloadDocument(documentId);
+      }
+    } catch (error) {
+      alert("❌ Erreur lors de la prévisualisation");
+    }
+  };
+
   // Télécharger un document
   const handleDownloadDocument = async (documentId: string) => {
     const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
@@ -322,7 +368,7 @@ export default function AgencesPage() {
     }
     
     try {
-      const response = await fetch(`http://localhost:8080/api/admin/validation/documents/${documentId}/download`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/documents/${documentId}/download`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`
@@ -339,9 +385,20 @@ export default function AgencesPage() {
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
+      
+      // 📄 Récupérer le nom de fichier depuis l'en-tête Content-Disposition
+      const contentDisposition = response.headers.get('content-disposition');
+      let fileName = `document-${documentId}`;
+      if (contentDisposition) {
+        const matches = contentDisposition.match(/filename="(.+)"/);
+        if (matches && matches[1]) {
+          fileName = matches[1];
+        }
+      }
+      
       const a = document.createElement("a");
       a.href = url;
-      a.download = `document-${documentId}.pdf`;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -401,6 +458,22 @@ export default function AgencesPage() {
     }
   };
 
+  // 📊 Calculer les statistiques des documents
+  const getDocumentStats = (docs: any[]) => {
+    const total = docs.length;
+    const approved = docs.filter(d => d.statut === 'APPROUVEE').length;
+    const pending = docs.filter(d => d.statut === 'EN_ATTENTE').length;
+    const rejected = docs.filter(d => d.statut === 'REJETTEE').length;
+    return { total, approved, pending, rejected };
+  };
+
+  // Vérifier si tous les documents sont approuvés
+  const canValidateAgence = (docs: any[]) => {
+    if (docs.length === 0) return true; // Si pas de documents, on peut valider
+    const { pending, rejected } = getDocumentStats(docs);
+    return pending === 0 && rejected === 0;
+  };
+
   const filteredAgences = agences.filter(agence => {
     const matchesSearch = agence.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          agence.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -445,113 +518,91 @@ export default function AgencesPage() {
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total</p>
-              <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{stats.total}</p>
+              <p className="text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Total</p>
+              <p className="text-xl sm:text-2xl font-black bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{stats.total}</p>
             </div>
-            <div className="p-3 bg-blue-100 rounded-xl shadow-lg">
-              <Building className="w-6 h-6 text-blue-600" />
+            <div className="p-2 sm:p-3 bg-blue-100 rounded-xl">
+              <Building className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20">
+        <div className="bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">En attente</p>
-              <p className="text-2xl font-bold text-yellow-600">{stats.enAttente}</p>
+              <p className="text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Attente</p>
+              <p className="text-xl sm:text-2xl font-black text-amber-600">{stats.enAttente}</p>
             </div>
-            <div className="p-3 bg-yellow-100 rounded-xl shadow-lg">
-              <Clock className="w-6 h-6 text-yellow-600" />
+            <div className="p-2 sm:p-3 bg-amber-100 rounded-xl">
+              <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20">
+        <div className="bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Validées</p>
-              <p className="text-2xl font-bold text-green-600">{stats.validees}</p>
+              <p className="text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Validées</p>
+              <p className="text-xl sm:text-2xl font-black text-emerald-600">{stats.validees}</p>
             </div>
-            <div className="p-3 bg-green-100 rounded-xl shadow-lg">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="p-2 sm:p-3 bg-emerald-100 rounded-xl">
+              <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-xl border border-white/20">
+        <div className="bg-white/90 backdrop-blur-xl p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Rejetées</p>
-              <p className="text-2xl font-bold text-red-600">{stats.rejetees}</p>
+              <p className="text-[10px] sm:text-sm font-bold text-slate-500 uppercase tracking-wider">Rejetées</p>
+              <p className="text-xl sm:text-2xl font-black text-red-600">{stats.rejetees}</p>
             </div>
-            <div className="p-3 bg-red-100 rounded-xl shadow-lg">
-              <XCircle className="w-6 h-6 text-red-600" />
+            <div className="p-2 sm:p-3 bg-red-100 rounded-xl">
+              <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
             </div>
           </div>
         </div>
       </div>
 
       {/* Filtres et recherche */}
-      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 p-6">
-        <div className="flex flex-col md:flex-row gap-4">
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-6">
+        <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <div className="relative group">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4 group-focus-within:text-indigo-500 transition-colors" />
               <input
                 type="text"
                 placeholder="Rechercher une agence..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white/50 backdrop-blur"
+                className="pl-10 pr-4 py-2.5 w-full bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 focus:bg-white transition-all text-sm"
               />
             </div>
           </div>
           
-          <div className="flex gap-2">
-            <button
-              onClick={() => setStatusFilter("TOUS")}
-              className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                statusFilter === "TOUS"
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg transform scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Tous
-            </button>
-            <button
-              onClick={() => setStatusFilter("EN_ATTENTE")}
-              className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                statusFilter === "EN_ATTENTE"
-                  ? "bg-gradient-to-r from-yellow-600 to-orange-600 text-white shadow-lg transform scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              En attente
-            </button>
-            <button
-              onClick={() => setStatusFilter("VALIDEE")}
-              className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                statusFilter === "VALIDEE"
-                  ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg transform scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Validées
-            </button>
-            <button
-              onClick={() => setStatusFilter("REJETEE")}
-              className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 ${
-                statusFilter === "REJETEE"
-                  ? "bg-gradient-to-r from-red-600 to-pink-600 text-white shadow-lg transform scale-105"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              Rejetées
-            </button>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: "TOUS", label: "Tous", color: "from-slate-600 to-slate-700" },
+              { id: "EN_ATTENTE", label: "En attente", color: "from-amber-500 to-orange-600" },
+              { id: "VALIDEE", label: "Validées", color: "from-emerald-500 to-teal-600" },
+              { id: "REJETEE", label: "Rejetées", color: "from-red-500 to-pink-600" }
+            ].map((filter) => (
+              <button
+                key={filter.id}
+                onClick={() => setStatusFilter(filter.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-sm active:scale-95 ${
+                  statusFilter === filter.id
+                    ? `bg-gradient-to-r ${filter.color} text-white shadow-md`
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {filter.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -560,21 +611,21 @@ export default function AgencesPage() {
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-xl border border-white/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-gray-100">
+            <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Nom agence
+                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Agence
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                  Email
+                <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Contact
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Statut
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="hidden sm:table-cell px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-600 uppercase tracking-wider">
+                <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
@@ -590,24 +641,31 @@ export default function AgencesPage() {
               ) : (
                 filteredAgences.map((agence) => (
                   <tr key={agence.id} className="hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-colors">
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-4">
                       <div>
-                        <div className="font-medium text-gray-900">{agence.nom}</div>
-                        {agence.adresse && (
-                          <div className="text-sm text-gray-500">{agence.adresse}</div>
-                        )}
+                        <div className="font-bold text-slate-900 text-sm">{agence.nom}</div>
+                        <div className="text-xs text-indigo-500 flex items-center gap-1 mt-0.5 truncate max-w-[150px] sm:max-w-none">
+                          <Building className="w-3 h-3" />
+                          {agence.adresse || "Bamako"}
+                        </div>
+                        <div className="lg:hidden mt-2 flex flex-col gap-1">
+                           <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                             <Mail className="w-3 h-3" />
+                             {agence.email}
+                           </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="hidden lg:table-cell px-6 py-4">
                       <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-600">{agence.email}</span>
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                          <Mail className="w-4 h-4 text-indigo-400" />
+                          {agence.email}
                         </div>
                         {agence.telephone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span className="text-gray-600">{agence.telephone}</span>
+                          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+                            <Phone className="w-4 h-4 text-indigo-400" />
+                            {agence.telephone}
                           </div>
                         )}
                       </div>
@@ -641,12 +699,46 @@ export default function AgencesPage() {
                         
                         {(agence.statut === "EN_ATTENTE" || agence.statut === "EN_ATTENTE_VERIFICATION") && (
                           <>
-                            <button
-                              onClick={() => handleValidateAgence(agence.id)}
-                              className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-all duration-200"
-                            >
-                              <CheckCircle className="w-4 h-4" />
-                            </button>
+                            {/* Indicateur de documents */}
+                            {(() => {
+                              const stats = getDocumentStats(documents);
+                              const allApproved = canValidateAgence(documents);
+                              return (
+                                <div className="flex items-center gap-2 mr-2">
+                                  {documents.length > 0 && (
+                                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                                      allApproved 
+                                        ? 'bg-green-100 text-green-700' 
+                                        : 'bg-yellow-100 text-yellow-700'
+                                    }`}>
+                                      {stats.approved}/{stats.total} docs
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                            
+                            {/* Bouton Valider - désactivé si documents en attente */}
+                            {(() => {
+                              const canValidate = canValidateAgence(documents);
+                              return (
+                                <button
+                                  onClick={() => canValidate && handleValidateAgence(agence.id)}
+                                  disabled={!canValidate}
+                                  title={!canValidate 
+                                    ? "Vous devez d'abord approuver tous les documents avant de valider cette agence" 
+                                    : "Valider l'agence"}
+                                  className={`p-2 rounded-lg transition-all duration-200 ${
+                                    canValidate 
+                                      ? "text-green-600 hover:text-green-700 hover:bg-green-50" 
+                                      : "text-gray-400 cursor-not-allowed"
+                                  }`}
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                </button>
+                              );
+                            })()}
+                            
                             <button
                               onClick={() => handleRejectAgence(agence.id)}
                               className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200"
@@ -772,6 +864,59 @@ export default function AgencesPage() {
                   Documents de vérification
                 </h3>
 
+                {/* 📊 Alerte sur le statut des documents */}
+                {!documentsLoading && documents.length > 0 && (
+                  (() => {
+                    const { total, approved, pending, rejected } = getDocumentStats(documents);
+                    const allApproved = canValidateAgence(documents);
+                    
+                    if (allApproved) {
+                      return (
+                        <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <span className="text-green-800 font-medium">
+                              ✅ Tous les documents sont approuvés ({approved}/{total})
+                            </span>
+                          </div>
+                          <p className="text-green-700 text-sm mt-1">
+                            Vous pouvez maintenant valider cette agence.
+                          </p>
+                        </div>
+                      );
+                    } else if (pending > 0) {
+                      return (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-5 h-5 text-yellow-600" />
+                            <span className="text-yellow-800 font-medium">
+                              ⏳ Documents en attente ({approved}/{total} approuvés)
+                            </span>
+                          </div>
+                          <p className="text-yellow-700 text-sm mt-1">
+                            Vous devez approuver tous les documents avant de pouvoir valider cette agence.
+                          </p>
+                        </div>
+                      );
+                    } else if (rejected > 0) {
+                      return (
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                          <div className="flex items-center gap-2">
+                            <XCircle className="w-5 h-5 text-red-600" />
+                            <span className="text-red-800 font-medium">
+                              ❌ Documents rejetés présents
+                            </span>
+                          </div>
+                          <p className="text-red-700 text-sm mt-1">
+                            Certains documents ont été rejetés. L'agence doit soumettre de nouveaux documents.
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()
+                )}
+
                 {documentsLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
@@ -809,6 +954,14 @@ export default function AgencesPage() {
                             )}
                           </div>
                           <div className="flex items-center gap-1 ml-4">
+                            {/* Bouton Prévisualiser pour images et PDF */}
+                            <button
+                              onClick={() => handlePreviewDocument(doc.id, doc.type)}
+                              className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors"
+                              title="Prévisualiser"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
                             <button
                               onClick={() => handleDownloadDocument(doc.id)}
                               className="p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-colors"
@@ -841,6 +994,75 @@ export default function AgencesPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de prévisualisation des documents */}
+      {previewDoc && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Prévisualisation: {previewDoc.name}
+              </h3>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    window.URL.revokeObjectURL(previewDoc.url);
+                    setPreviewDoc(null);
+                  }}
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XCircle className="w-6 h-6" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto p-4 bg-gray-50 flex items-center justify-center">
+              {previewDoc.type.startsWith('image/') ? (
+                <img 
+                  src={previewDoc.url} 
+                  alt={previewDoc.name}
+                  className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-lg"
+                />
+              ) : previewDoc.type === 'application/pdf' ? (
+                <iframe
+                  src={previewDoc.url}
+                  className="w-full h-[70vh] rounded-lg"
+                  title={previewDoc.name}
+                />
+              ) : (
+                <div className="text-center">
+                  <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">Type de fichier non pris en charge pour la prévisualisation</p>
+                </div>
+              )}
+            </div>
+            <div className="p-4 border-t bg-gray-50 flex justify-end gap-2">
+              <button
+                onClick={() => {
+                  window.URL.revokeObjectURL(previewDoc.url);
+                  setPreviewDoc(null);
+                }}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              >
+                Fermer
+              </button>
+              <button
+                onClick={() => {
+                  const a = document.createElement('a');
+                  a.href = previewDoc.url;
+                  a.download = previewDoc.name;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                }}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Télécharger
+              </button>
             </div>
           </div>
         </div>

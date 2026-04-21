@@ -1,9 +1,10 @@
 import { Calendar, MapPin, Tag } from "lucide-react";
+import { API_BASE_URL } from "@/services/api";
 
 export default function AnnonceCard({ annonce }: { annonce: any }) {
     const fallbackImage =
         "https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=1073&q=80";
-    const getImageUrl = (url: string) => url.startsWith("http") ? url : `http://localhost:8080${url}`;
+    const getImageUrl = (url: string) => url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
     const imageUrl = annonce.images?.length > 0 ? getImageUrl(annonce.images[0]) : fallbackImage;
 
     return (

@@ -40,7 +40,6 @@ public class Agence {
     private String pays;
     private String codePostal;
 
-    private String numeroLicence;
     private String siteWeb;
     private String logoUrl;
 
@@ -51,16 +50,10 @@ public class Agence {
     @Column(nullable = false)
     private StatutAgence statut;
 
-    private String ninea;
+    private String nina;
 
     @Column(columnDefinition = "TEXT")
     private String horairesOuverture;
-
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean visitePayante = false;
-
-    private Double tarifVisite;
 
     @Builder.Default
     @Column(nullable = false)

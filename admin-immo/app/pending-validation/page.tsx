@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -22,11 +24,9 @@ export default function PendingValidationPage() {
     // Récupérer les infos utilisateur
     const fetchUser = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/utilisateurs/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          setUser(await res.json());
+        const data = await apiFetch("/api/utilisateurs/me");
+        if (data) {
+          setUser(data);
         }
       } catch (error) {
         console.error("Erreur:", error);
@@ -136,10 +136,10 @@ export default function PendingValidationPage() {
                 Une question ? Contactez notre support
               </p>
               <a 
-                href="mailto:support@bamakohome.ml" 
+                href="mailto:support@ikabayt.ml" 
                 className="inline-flex items-center gap-2 text-indigo-600 font-semibold hover:text-indigo-800 transition-colors"
               >
-                support@bamakohome.ml
+                support@ikabayt.ml
                 <ArrowRight className="w-4 h-4" />
               </a>
             </div>
@@ -147,7 +147,7 @@ export default function PendingValidationPage() {
 
           {/* Footer */}
           <p className="text-center text-slate-400 text-sm mt-6">
-            Merci de votre patience et bienvenue sur BamakoHome !
+            Merci de votre patience et bienvenue sur IkaBayt !
           </p>
         </div>
       </main>

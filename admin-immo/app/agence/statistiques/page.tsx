@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import React from "react";
 import {
@@ -14,7 +16,7 @@ export default function AgenceStatistiques() {
         const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken") : null;
         const fetchStats = async () => {
             try {
-                const response = await fetch("http://localhost:8080/api/stats/agence", {
+                const response = await fetch(`${API_BASE_URL}/api/stats/agence`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (response.ok) {

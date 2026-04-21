@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import React, { useState, useMemo } from "react";
 import {
@@ -106,7 +108,7 @@ export default function AgenceRendezVous() {
             if (!token) return;
 
             try {
-                const response = await fetch("http://localhost:8080/api/reservations/agence", {
+                const response = await fetch(`${API_BASE_URL}/api/reservations/agence`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 
@@ -140,7 +142,7 @@ export default function AgenceRendezVous() {
         if (!token) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/reservations/${id}/confirmer`, {
+            const response = await fetch(`${API_BASE_URL}/api/reservations/${id}/confirmer`, {
                 method: 'POST',
                 headers: { "Authorization": `Bearer ${token}` }
             });
@@ -168,7 +170,7 @@ export default function AgenceRendezVous() {
         if (!token) return;
 
         try {
-            const response = await fetch(`http://localhost:8080/api/reservations/${id}`, {
+            const response = await fetch(`${API_BASE_URL}/api/reservations/${id}`, {
                 method: 'DELETE',
                 headers: { "Authorization": `Bearer ${token}` }
             });

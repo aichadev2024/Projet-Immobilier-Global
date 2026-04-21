@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
+import { apiFetch } from '@/services/api'
 import { 
   Home, 
   Search, 
@@ -142,20 +143,7 @@ export function UserLayout({ children, activeSection, onSectionChange }: UserLay
 
   // Fetch user and notifications
   useEffect(() => {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-    if (!token || token === "null" || token === "undefined") {
-      router.push('/login')
-      return
-    }
-
-    // Fetch user
-    fetch('http://localhost:8080/api/utilisateurs/me', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(res => res.ok ? res.json() : null)
-    .then(data => setUser(data))
-
-    // Fetch notifications
+    fetchUser()
     fetchNotifications()
     
     // Poll for new notifications every 30 seconds
@@ -163,30 +151,30 @@ export function UserLayout({ children, activeSection, onSectionChange }: UserLay
     return () => clearInterval(interval)
   }, [router])
 
-  const fetchNotifications = async () => {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
-    if (!token) return
-
+  const fetchUser = async () => {
     try {
-      const res = await fetch('http://localhost:8080/api/notifications/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      if (res.ok) {
-        const data = await res.json()
-        setNotifications(data)
-        setUnreadCount(data.filter((n: Notification) => !n.isRead).length)
-      }
+      const data = await apiFetch("/api/utilisateurs/me")
+      setUser(data)
+    } catch (error) {
+      console.error("Layout User Fetch Error:", error)
+      router.push('/login')
+    }
+  }
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await apiFetch("/api/notifications/me")
+      setNotifications(data)
+      setUnreadCount(data.filter((n: Notification) => !n.isRead).length)
     } catch (err) {
       console.error('Erreur notifications:', err)
     }
   }
 
   const markAsRead = async (notificationId: number) => {
-    const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
     try {
-      await fetch(`http://localhost:8080/api/notifications/${notificationId}/marquer-lu`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
+      await apiFetch(`/api/notifications/${notificationId}/marquer-lu`, {
+        method: 'PUT'
       })
       fetchNotifications()
     } catch (err) {
@@ -222,7 +210,7 @@ export function UserLayout({ children, activeSection, onSectionChange }: UserLay
                 <Home className="h-7 w-7 text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-slate-900 text-2xl tracking-tighter leading-none mb-1">BamakoHome</span>
+                <span className="font-black text-slate-900 text-2xl tracking-tighter leading-none mb-1">IkaBayt</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   <span className="text-[10px] text-blue-600 font-black uppercase tracking-widest bg-blue-50/80 px-1.5 py-0.5 rounded-md">Espace Client</span>

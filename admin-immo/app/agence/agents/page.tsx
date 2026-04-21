@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -83,7 +85,7 @@ export default function AgenceAgents() {
 
   const fetchAgents = async (token: string) => {
     try {
-      const response = await fetch('http://localhost:8080/api/agences/agents', {
+      const response = await fetch(`${API_BASE_URL}/api/agences/agents`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -166,7 +168,7 @@ export default function AgenceAgents() {
   const handleAddAgent = async () => {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:8080/api/agences/agents', {
+      const response = await fetch(`${API_BASE_URL}/api/agences/agents`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -203,7 +205,7 @@ export default function AgenceAgents() {
 
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      const response = await fetch(`http://localhost:8080/api/agences/agents/${agentId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/agences/agents/${agentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

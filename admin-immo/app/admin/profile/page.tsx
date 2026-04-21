@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -69,7 +71,7 @@ export default function ProfilePage() {
 
       console.log("👤 Récupération du profil utilisateur...");
       
-      const response = await fetch("http://localhost:8080/api/utilisateurs/me", {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/me`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -114,7 +116,7 @@ export default function ProfilePage() {
 
       console.log("👤 Mise à jour du profil utilisateur...");
       
-      const response = await fetch(`http://localhost:8080/api/utilisateurs/${user.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/${user.id}`, {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -181,7 +183,7 @@ export default function ProfilePage() {
 
       console.log("🔒 Changement du mot de passe...");
       
-      const response = await fetch("http://localhost:8080/api/utilisateurs/change-password", {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/change-password`, {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`,

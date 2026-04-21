@@ -5,8 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { getBiens } from "@/services/bienService";
 import { 
   ArrowLeft, MapPin, Bed, Bath, Square, Car, 
-  Wifi, Trees, CheckCircle, MessageCircle, Calendar, Phone, Share2, Loader2, X, Mail
+  Wifi, Trees, CheckCircle, MessageCircle, Calendar, Phone, Share2, Loader2, X, Mail, ChevronLeft,
+  ChevronRight
 } from "lucide-react";
+import { API_BASE_URL } from "@/services/api";
 
 export default function AnnonceDetailsPage() {
   const router = useRouter();
@@ -58,7 +60,7 @@ export default function AnnonceDetailsPage() {
     try {
       setReservationLoading(true);
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:8080/api/reservations', {
+      const response = await fetch(`${API_BASE_URL}/api/reservations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({
@@ -88,7 +90,7 @@ export default function AnnonceDetailsPage() {
   if (!bien) return null;
 
   const images = bien.images?.length > 0 
-    ? bien.images.map((img: string) => img.startsWith("http") ? img : `http://localhost:8080${img}`)
+    ? bien.images.map((img: string) => img.startsWith("http") ? img : `${API_BASE_URL}${img}`)
     : ["/images/maison bamako.webp"];
 
   const isLocation = bien.typeTransaction === "LOCATION";
@@ -96,7 +98,7 @@ export default function AnnonceDetailsPage() {
   
   const phoneNumber = bien.utilisateur?.telephone || bien.telephone || "+22300000000";
   const waNumber = phoneNumber.replace(/[^0-9]/g, '');
-  const waMessage = encodeURIComponent(`Bonjour, je suis intéressé(e) par le bien "${bien.libelle}" disponible sur BamakoHome.`);
+  const waMessage = encodeURIComponent(`Bonjour, je suis intéressé(e) par le bien "${bien.libelle}" disponible sur IkaBayt.`);
   const waLink = `https://wa.me/${waNumber}?text=${waMessage}`;
 
   return (

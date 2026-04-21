@@ -1,3 +1,4 @@
+import { API_BASE_URL } from "@/services/api";
 import Link from "next/link";
 import { MapPin, Maximize } from "lucide-react";
 
@@ -5,7 +6,7 @@ export default function PropertyCard({ bien }: { bien: any }) {
     // Use property images if available, otherwise high-quality fallback
     const fallbackImage =
         "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1170&q=80";
-    const getImageUrl = (url: string) => url.startsWith("http") ? url : `http://localhost:8080${url}`;
+    const getImageUrl = (url: string) => url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
     const imageUrl = bien.images?.length > 0 ? getImageUrl(bien.images[0]) : bien.imageUrl || fallbackImage;
 
     return (

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { getCurrentUser } from "@/services/authService";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface User {
   id: string;
@@ -28,8 +28,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    // NE PAS vérifier l'auth sur les pages publiques (login, register, etc.)
+    const publicPaths = ["/login", "/register", "/forgot-password", "/validate-otp", "/"];
+    if (publicPaths.includes(pathname)) {
+      setLoading(false);
+      return;
+    }
+
+    // NE PAS appeler API si pas de token (évite 401 inutile)
+    const token = typeof window !== "undefined" 
+      ? localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken")
+      : null;
+    
+    if (!token) {
+      setUser(null);
+      setLoading(false);
+      return;
+    }
+
     async function loadUser() {
       try {
         const data = await getCurrentUser();
@@ -42,13 +61,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     loadUser();
-  }, []);
+  }, [pathname]);
 
   const logout = () => {
     localStorage.removeItem("accessToken");
     sessionStorage.removeItem("accessToken");
     setUser(null);
-    router.replace("/login");
+    // router.replace("/login"); // Removed this line
   };
 
   return (

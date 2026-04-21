@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import {
@@ -53,9 +55,9 @@ interface UserProfile {
 
 export default function ParametresPage() {
   const [settings, setSettings] = useState<PlatformSettings>({
-    nomPlatforme: "BamakoHome",
+    nomPlatforme: "IkaBayt",
     logoUrl: "",
-    emailContact: "contact@bamakohome.com",
+    emailContact: "contact@ikabayt.com",
     telephoneContact: "+223 70 00 00 00",
     adresse: "Bamako, Mali",
     description: "Plateforme immobilière de référence au Mali",
@@ -132,7 +134,7 @@ export default function ParametresPage() {
       console.log("📡 Récupération des paramètres de la plateforme...");
       
       // Pour l'instant, on simule (à implémenter dans le backend)
-      // const response = await fetch("http://localhost:8080/api/admin/settings", {
+      // const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
       //   method: "GET",
       //   headers: {
       //     "Authorization": `Bearer ${token}`,
@@ -162,7 +164,7 @@ export default function ParametresPage() {
 
       console.log("👤 Récupération du profil utilisateur...");
       
-      const response = await fetch("http://localhost:8080/api/utilisateurs/me", {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/me`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -204,7 +206,7 @@ export default function ParametresPage() {
       console.log("💾 Sauvegarde des paramètres de la plateforme...");
       
       // Pour l'instant, on simule (à implémenter dans le backend)
-      // const response = await fetch("http://localhost:8080/api/admin/settings", {
+      // const response = await fetch(`${API_BASE_URL}/api/admin/settings`, {
       //   method: "PUT",
       //   headers: {
       //     "Authorization": `Bearer ${token}`,
@@ -239,7 +241,7 @@ export default function ParametresPage() {
 
       console.log("👤 Mise à jour du profil utilisateur...");
       
-      const response = await fetch(`http://localhost:8080/api/utilisateurs/${userProfile.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/${userProfile.id}`, {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -305,7 +307,7 @@ export default function ParametresPage() {
 
       console.log("🔒 Changement du mot de passe...");
       
-      const response = await fetch("http://localhost:8080/api/utilisateurs/change-password", {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/change-password`, {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`,

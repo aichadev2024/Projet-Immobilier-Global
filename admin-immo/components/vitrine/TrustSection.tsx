@@ -116,7 +116,7 @@ export default function TrustSection({ biensCount, agencesCount }: TrustSectionP
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="group relative"
             >
-              <div className="relative rounded-[2rem] bg-white/[0.02] backdrop-blur-2xl border border-white/[0.05] p-8 md:p-10 text-center hover:bg-white/[0.04] hover:border-white/10 transition-all duration-500 hover:-translate-y-2 group overflow-hidden shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
+              <div className="relative rounded-[2rem] bg-white/[0.02] backdrop-blur-2xl border border-white/[0.05] p-6 sm:p-8 md:p-10 text-center hover:bg-white/[0.04] hover:border-white/10 transition-all duration-500 hover:-translate-y-2 group overflow-hidden shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]">
                 {/* Glow effect */}
                 <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${
                   item.color === 'blue' ? 'from-blue-500 to-cyan-500' :
@@ -126,25 +126,25 @@ export default function TrustSection({ biensCount, agencesCount }: TrustSectionP
                 }`} />
                 
                 <div className="relative z-10">
-                  <div className={`w-16 h-16 rounded-[1.25rem] bg-gradient-to-br flex items-center justify-center mx-auto mb-6 shadow-xl shadow-black/20 border border-white/5 ${
+                  <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-[1.25rem] bg-gradient-to-br flex items-center justify-center mx-auto mb-4 sm:mb-6 shadow-xl shadow-black/20 border border-white/5 ${
                     item.color === 'blue' ? 'from-blue-500 to-blue-600 text-blue-100' :
                     item.color === 'green' ? 'from-green-500 to-green-600 text-green-100' :
                     item.color === 'purple' ? 'from-purple-500 to-purple-600 text-purple-100' :
                     'from-orange-500 to-orange-600 text-orange-100'
                   }`}>
-                    <item.icon className="w-8 h-8" />
+                    <item.icon className="w-6 h-6 sm:w-8 sm:h-8" />
                   </div>
                   
-                  <div className="text-4xl md:text-5xl font-black text-white mb-3 tabular-nums drop-shadow-md tracking-tight">
+                  <div className="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-2 sm:mb-3 tabular-nums drop-shadow-md tracking-tight">
                     {typeof item.value === "number" ? item.value.toLocaleString("fr-FR") : item.value}
-                    {item.suffix && <span className="text-3xl font-bold opacity-80">{item.suffix}</span>}
+                    {item.suffix && <span className="text-2xl sm:text-3xl font-bold opacity-80">{item.suffix}</span>}
                   </div>
                   
-                  <div className="text-white/80 font-bold uppercase tracking-widest text-[11px] mb-2">
+                  <div className="text-white/80 font-bold uppercase tracking-widest text-[9px] sm:text-[11px] mb-2">
                     {item.label}
                   </div>
                   
-                  <div className="text-slate-400 text-sm font-medium">{item.sub}</div>
+                  <div className="text-slate-400 text-xs sm:text-sm font-medium">{item.sub}</div>
                 </div>
 
                 {/* Subtle bottom line indicator */}
@@ -166,20 +166,20 @@ export default function TrustSection({ biensCount, agencesCount }: TrustSectionP
           transition={{ duration: 0.8, delay: 0.5 }}
           className="mt-16 text-center"
         >
-          <div className="inline-flex items-center gap-6 bg-white/5 backdrop-blur-sm rounded-full px-8 py-4 border border-white/10">
+          <div className="inline-flex flex-col sm:flex-row items-center gap-4 sm:gap-6 bg-white/5 backdrop-blur-sm rounded-[1.5rem] sm:rounded-full px-6 py-4 sm:px-8 border border-white/10 w-full sm:w-auto">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-blue-400" />
-              <span className="text-white font-medium">Garantie 100% sécurisée</span>
+              <span className="text-white font-medium text-sm">Garantie 100% sécurisée</span>
             </div>
-            <div className="w-px h-6 bg-white/20" />
+            <div className="hidden sm:block w-px h-6 bg-white/20" />
             <div className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-green-400" />
-              <span className="text-white font-medium">Meilleur prix garanti</span>
+              <span className="text-white font-medium text-sm">Meilleur prix garanti</span>
             </div>
-            <div className="w-px h-6 bg-white/20" />
+            <div className="hidden sm:block w-px h-6 bg-white/20" />
             <div className="flex items-center gap-2">
               <Award className="w-5 h-5 text-purple-400" />
-              <span className="text-white font-medium">Expertise locale</span>
+              <span className="text-white font-medium text-sm">Expertise locale</span>
             </div>
           </div>
         </motion.div>

@@ -1,4 +1,6 @@
 'use client';
+import { API_BASE_URL } from "@/services/api";
+
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -120,7 +122,7 @@ export default function UtilisateurMessagerie() {
     if (!token) return;
     try {
       setLoading(true);
-      const res = await fetch('http://localhost:8080/api/contacts/utilisateur/recus', {
+      const res = await fetch(`${API_BASE_URL}/api/contacts/utilisateur/recus`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -177,7 +179,7 @@ export default function UtilisateurMessagerie() {
       setConversation(conv);
       if (raw.statut === 'EN_ATTENTE') {
         const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-        fetch(`http://localhost:8080/api/contacts/${raw.id}/marquer-lu`, {
+        fetch(`${API_BASE_URL}/api/contacts/${raw.id}/marquer-lu`, {
             method: 'PUT',
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -192,7 +194,7 @@ export default function UtilisateurMessagerie() {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
     setSending(true);
     try {
-      const res = await fetch(`http://localhost:8080/api/contacts/${selectedContact.id}/repondre`, {
+      const res = await fetch(`${API_BASE_URL}/api/contacts/${selectedContact.id}/repondre`, {
           method: 'PUT',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -383,7 +385,7 @@ export default function UtilisateurMessagerie() {
                         >
                            <div className="w-16 h-16 bg-blue-50 rounded-2xl flex-shrink-0 overflow-hidden border border-blue-50">
                               <img 
-                                src={selectedContact.raw.bien.images?.[0] ? (selectedContact.raw.bien.images[0].startsWith("http") ? selectedContact.raw.bien.images[0] : `http://localhost:8080${selectedContact.raw.bien.images[0]}`) : "/images/maison bamako.webp"} 
+                                src={selectedContact.raw.bien.images?.[0] ? (selectedContact.raw.bien.images[0].startsWith("http") ? selectedContact.raw.bien.images[0] : `${API_BASE_URL}${selectedContact.raw.bien.images[0]}`) : "/images/maison bamako.webp"} 
                                 className="w-full h-full object-cover" 
                                 alt="Bien" 
                               />

@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -27,33 +29,40 @@ export default function RegisterPage() {
   const [role, setRole] = useState("UTILISATEUR");
   const [loading, setLoading] = useState(false);
 
+  // États pour la prévisualisation des images
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+
   // États pour les champs spécifiques aux agences
   const [nomAgence, setNomAgence] = useState("");
   const [adresseAgence, setAdresseAgence] = useState("");
   const [telephoneAgence, setTelephoneAgence] = useState("+223 ");
-  const [ninea, setNinea] = useState("");
+  const [nina, setNina] = useState("");
   const [descriptionAgence, setDescriptionAgence] = useState("");
-  const [visitePayante, setVisitePayante] = useState(false);
-  const [tarifVisite, setTarifVisite] = useState(0);
+  // Visite payante déplacée dans la création de biens
 
   // États pour les documents de l'agence
   const [documents, setDocuments] = useState<{
-    registreCommerce: File | null;
+    rccm: File | null;
+    nif: File | null;
+    agrement: File | null;
     pieceIdentite: File | null;
-    licencePro: File | null;
   }>({
-    registreCommerce: null,
+    rccm: null,
+    nif: null,
+    agrement: null,
     pieceIdentite: null,
-    licencePro: null,
   });
   const [uploadProgress, setUploadProgress] = useState<{
-    registreCommerce: number;
+    rccm: number;
+    nif: number;
+    agrement: number;
     pieceIdentite: number;
-    licencePro: number;
   }>({
-    registreCommerce: 0,
+    rccm: 0,
+    nif: 0,
+    agrement: 0,
     pieceIdentite: 0,
-    licencePro: 0,
   });
 
   const hasMinLength = motDePasse.length >= 8;
@@ -64,11 +73,11 @@ export default function RegisterPage() {
   const passwordsMatch = motDePasse !== "" && motDePasse === confirmPassword;
   
   const hasRequiredFields = nom.trim() !== "" && prenom.trim() !== "" && nomUtilisateur.trim() !== "" && email.trim() !== "" && motDePasse.trim() !== "" && confirmPassword.trim() !== "";
-  const hasAgencyRequiredFields = role === "AGENCE" && nomAgence.trim() !== "" && adresseAgence.trim() !== "" && telephoneAgence.trim() !== "" && ninea.trim() !== "";
-  const hasValidNINEA = /^\d{9}$/.test(ninea.trim()); // Exactement 9 chiffres requis
+  const hasAgencyRequiredFields = role === "AGENCE" && nomAgence.trim() !== "" && adresseAgence.trim() !== "" && telephoneAgence.trim() !== "" && nina.trim() !== "";
+  const hasValidNINA = /^\d{9}$/.test(nina.trim()); // Exactement 9 chiffres requis
   const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const hasRequiredDocuments = role !== "AGENCE" || (documents.registreCommerce !== null && documents.pieceIdentite !== null);
-  const canSubmit = hasRequiredFields && hasValidEmail && hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && passwordsMatch && (role !== "AGENCE" || (hasAgencyRequiredFields && hasValidNINEA && hasRequiredDocuments)) && !loading;
+  const hasRequiredDocuments = role !== "AGENCE" || (documents.rccm !== null && documents.nif !== null && documents.pieceIdentite !== null);
+  const canSubmit = hasRequiredFields && hasValidEmail && hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && passwordsMatch && (role !== "AGENCE" || (hasAgencyRequiredFields && hasValidNINA && hasRequiredDocuments)) && !loading;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,34 +100,28 @@ export default function RegisterPage() {
         formData.append("nomAgence", nomAgence);
         formData.append("adresseAgence", adresseAgence);
         formData.append("telephoneAgence", telephoneAgence);
-        formData.append("ninea", ninea);
+        formData.append("nina", nina);
         formData.append("descriptionAgence", descriptionAgence);
-        formData.append("visitePayante", visitePayante ? "true" : "false");
-        if (visitePayante && tarifVisite > 0) {
-          formData.append("tarifVisite", tarifVisite.toString());
-        }
 
         // Ajouter les documents
-        if (documents.registreCommerce) {
-          formData.append("registreCommerce", documents.registreCommerce);
+        if (documents.rccm) {
+          formData.append("rccm", documents.rccm);
+        }
+        if (documents.nif) {
+          formData.append("nif", documents.nif);
+        }
+        if (documents.agrement) {
+          formData.append("agrement", documents.agrement);
         }
         if (documents.pieceIdentite) {
           formData.append("pieceIdentite", documents.pieceIdentite);
         }
-        if (documents.licencePro) {
-          formData.append("licencePro", documents.licencePro);
-        }
       }
 
-      const res = await fetch("http://localhost:8080/auth/register", {
+      await apiFetch("/auth/register", {
         method: "POST",
         body: formData
       });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Erreur lors de la création du compte.");
-      }
 
       if (role === "AGENCE") {
         alert("Compte créé avec succès ! Vos documents ont été soumis pour vérification. Un administrateur validera votre compte après vérification des documents.");
@@ -139,7 +142,7 @@ export default function RegisterPage() {
   const accentRing = isAgency ? "focus:ring-emerald-500/50" : "focus:ring-indigo-500/50";
 
   // Fonctions de gestion des documents
-  const handleDocumentSelect = (type: 'registreCommerce' | 'pieceIdentite' | 'licencePro', file: File | null) => {
+  const handleDocumentSelect = (type: 'rccm' | 'nif' | 'agrement' | 'pieceIdentite', file: File | null) => {
     setDocuments(prev => ({ ...prev, [type]: file }));
     if (file) {
       // Simuler la progression du téléchargement
@@ -155,9 +158,36 @@ export default function RegisterPage() {
     }
   };
 
-  const handleDocumentRemove = (type: 'registreCommerce' | 'pieceIdentite' | 'licencePro') => {
+  const handleDocumentRemove = (type: 'rccm' | 'nif' | 'agrement' | 'pieceIdentite') => {
     setDocuments(prev => ({ ...prev, [type]: null }));
     setUploadProgress(prev => ({ ...prev, [type]: 0 }));
+  };
+
+  // Fonction pour créer une URL de prévisualisation
+  const createPreviewUrl = (file: File | null) => {
+    if (!file) return null;
+    if (file.type.startsWith('image/')) {
+      return URL.createObjectURL(file);
+    }
+    return null;
+  };
+
+  // Fonction pour ouvrir la prévisualisation
+  const openPreview = (file: File | null) => {
+    const url = createPreviewUrl(file);
+    if (url) {
+      setPreviewUrl(url);
+      setShowPreview(true);
+    }
+  };
+
+  // Fonction pour fermer la prévisualisation
+  const closePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewUrl(null);
+    setShowPreview(false);
   };
 
   // Composant de téléchargement de document
@@ -168,8 +198,9 @@ export default function RegisterPage() {
     progress,
     onFileSelect,
     onFileRemove,
-    acceptedTypes,
-    required = true
+    acceptedTypes = ".pdf,.jpg,.jpeg,.png",
+    required = true,
+    allowPreview = false,
   }: {
     label: string;
     description: string;
@@ -177,8 +208,9 @@ export default function RegisterPage() {
     progress: number;
     onFileSelect: (file: File | null) => void;
     onFileRemove: () => void;
-    acceptedTypes: string;
+    acceptedTypes?: string;
     required?: boolean;
+    allowPreview?: boolean;
   }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -220,13 +252,26 @@ export default function RegisterPage() {
                   <p className="text-[10px] text-emerald-600">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onFileRemove}
-                className="p-1 hover:bg-red-100 rounded-lg transition-colors"
-              >
-                <X size={14} className="text-red-500" />
-              </button>
+              <div className="flex items-center gap-1">
+                {allowPreview && file.type.startsWith('image/') && (
+                  <button
+                    type="button"
+                    onClick={() => openPreview(file)}
+                    className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                    title="Prévisualiser"
+                  >
+                    <Eye size={14} className="text-blue-500" />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={onFileRemove}
+                  className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                  title="Supprimer"
+                >
+                  <X size={14} className="text-red-500" />
+                </button>
+              </div>
             </div>
             {progress < 100 && (
               <div className="mt-2">
@@ -364,52 +409,9 @@ export default function RegisterPage() {
                   <input type="text" value={adresseAgence} onChange={(e) => setAdresseAgence(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-emerald-100 bg-white text-xs font-bold text-emerald-900 outline-none" placeholder="Adresse Siège" required />
                   <div className="grid grid-cols-2 gap-2">
                     <input type="tel" value={telephoneAgence} onChange={(e) => setTelephoneAgence(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-emerald-100 bg-white text-xs font-bold text-emerald-900 outline-none" placeholder="Tél. de l'agence" required />
-                    <input type="text" value={ninea} onChange={(e) => setNinea(e.target.value)} className={`w-full px-4 py-2 rounded-xl border ${ninea.length > 0 && !hasValidNINEA ? 'border-orange-400 text-orange-600 focus:border-orange-400/50' : 'border-emerald-100'} bg-white text-xs font-bold text-emerald-900 outline-none`} placeholder="NIF / NINA" required />
+                    <input type="text" value={nina} onChange={(e) => setNina(e.target.value)} className={`w-full px-4 py-2 rounded-xl border ${nina.length > 0 && !hasValidNINA ? 'border-orange-400 text-orange-600 focus:border-orange-400/50' : 'border-emerald-100'} bg-white text-xs font-bold text-emerald-900 outline-none`} placeholder="NINA" required />
                   </div>
                   <textarea value={descriptionAgence} onChange={(e) => setDescriptionAgence(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-emerald-100 bg-white text-xs font-bold text-emerald-900 outline-none resize-none" placeholder="Description courte de l'agence (optionnel)" rows={2} />
-
-                  {/* Visites payantes */}
-                  <div className="mt-3 p-3 bg-white rounded-xl border border-emerald-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Globe size={16} className="text-emerald-600" />
-                        <span className="text-xs font-bold text-emerald-900">Visites payantes ?</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setVisitePayante(false)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${!visitePayante ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                          Non (Gratuit)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setVisitePayante(true)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${visitePayante ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                          Oui (Payant)
-                        </button>
-                      </div>
-                    </div>
-                    {visitePayante && (
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-100">
-                        <span className="text-xs text-slate-500">Tarif par visite:</span>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            value={tarifVisite}
-                            onChange={(e) => setTarifVisite(Number(e.target.value))}
-                            className="w-24 px-3 py-1.5 rounded-lg border border-emerald-200 bg-white text-xs font-bold text-emerald-900 outline-none"
-                            placeholder="5000"
-                            min="0"
-                            step="100"
-                          />
-                          <span className="text-xs text-slate-600 font-medium">FCFA</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
 
                   {/* Documents de l'agence */}
                   <div className="mt-4 pt-4 border-t border-emerald-200">
@@ -419,36 +421,48 @@ export default function RegisterPage() {
                       <span className="text-[10px] text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Requis</span>
                     </div>
 
-                    {/* Registre de Commerce / NINEA */}
+                    {/* RCCM / NINA */}
                     <DocumentUploadField
-                      label="Registre de Commerce ou NINEA"
-                      description="Document justifiant l'existence légale de l'agence"
-                      file={documents.registreCommerce}
-                      progress={uploadProgress.registreCommerce}
-                      onFileSelect={(file) => handleDocumentSelect('registreCommerce', file)}
-                      onFileRemove={() => handleDocumentRemove('registreCommerce')}
+                      label="RCCM ou NINA"
+                      description="Registre du Commerce ou Numéro d'Identification Nationale"
+                      file={documents.rccm}
+                      progress={uploadProgress.rccm}
+                      onFileSelect={(file) => handleDocumentSelect('rccm', file)}
+                      onFileRemove={() => handleDocumentRemove('rccm')}
+                      acceptedTypes=".pdf,.jpg,.jpeg,.png"
+                    />
+
+                    {/* NIF Obligatoire */}
+                    <DocumentUploadField
+                      label="NIF"
+                      description="Numéro d'Identification Fiscale (obligatoire)"
+                      file={documents.nif}
+                      progress={uploadProgress.nif}
+                      onFileSelect={(file) => handleDocumentSelect('nif', file)}
+                      onFileRemove={() => handleDocumentRemove('nif')}
                       acceptedTypes=".pdf,.jpg,.jpeg,.png"
                     />
 
                     {/* Pièce d'identité */}
                     <DocumentUploadField
                       label="Pièce d'identité du responsable"
-                      description="CNI, Passeport ou permis de conduire"
+                      description="CNI, Passeport ou permis de conduire (cliquez sur l'icône œil pour prévisualiser)"
                       file={documents.pieceIdentite}
                       progress={uploadProgress.pieceIdentite}
                       onFileSelect={(file) => handleDocumentSelect('pieceIdentite', file)}
                       onFileRemove={() => handleDocumentRemove('pieceIdentite')}
                       acceptedTypes=".pdf,.jpg,.jpeg,.png"
+                      allowPreview={true}
                     />
 
-                    {/* Licence professionnelle (optionnel) */}
+                    {/* Agrément (optionnel) */}
                     <DocumentUploadField
-                      label="Licence professionnelle (optionnel)"
-                      description="Licence d'agence immobilière si applicable"
-                      file={documents.licencePro}
-                      progress={uploadProgress.licencePro}
-                      onFileSelect={(file) => handleDocumentSelect('licencePro', file)}
-                      onFileRemove={() => handleDocumentRemove('licencePro')}
+                      label="Agrément (optionnel)"
+                      description="Agrément d'agence immobilière si applicable"
+                      file={documents.agrement}
+                      progress={uploadProgress.agrement}
+                      onFileSelect={(file) => handleDocumentSelect('agrement', file)}
+                      onFileRemove={() => handleDocumentRemove('agrement')}
                       acceptedTypes=".pdf,.jpg,.jpeg,.png"
                       required={false}
                     />
@@ -515,6 +529,25 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de prévisualisation d'image */}
+      {showPreview && previewUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="relative max-w-4xl max-h-[90vh] w-full">
+            <button
+              onClick={closePreview}
+              className="absolute -top-12 right-0 p-2 text-white hover:text-gray-300 transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <img
+              src={previewUrl}
+              alt="Prévisualisation du document"
+              className="w-full h-full object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
 
       <style jsx global>{`
         @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }

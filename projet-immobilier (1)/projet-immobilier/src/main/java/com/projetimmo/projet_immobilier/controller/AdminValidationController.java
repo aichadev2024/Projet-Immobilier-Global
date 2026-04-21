@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.Objects;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RestController
 @RequestMapping("/api/admin/validation")
@@ -89,84 +91,101 @@ public class AdminValidationController {
                         Principal principal) {
 
                 String adminUsername = principal != null ? principal.getName() : "system";
-                log.info("Tentative de validation de l'agence {} par l'admin {}", utilisateurId,
-                                adminUsername);
+                log.info("Tentative de validation de l'agence {} par l'admin {}", utilisateurId, adminUsername);
 
-                Utilisateur utilisateur = utilisateurRepository.findById(Objects.requireNonNull(utilisateurId))
-                                .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
+                try {
+                        Utilisateur utilisateur = utilisateurRepository.findById(Objects.requireNonNull(utilisateurId))
+                                        .orElseThrow(() -> new RuntimeException("Utilisateur non trouvé"));
 
-                if (!"AGENCE".equals(utilisateur.getRole().getNom())) {
-                        throw new RuntimeException("Cet utilisateur n'est pas une agence");
-                }
+                        if (!"AGENCE".equals(utilisateur.getRole().getNom())) {
+                                throw new RuntimeException("Cet utilisateur n'est pas une agence");
+                        }
 
-                if (utilisateur.getStatut() != StatutUtilisateur.EN_ATTENTE_VALIDATION) {
-                        throw new RuntimeException("Cette agence n'est pas en attente de validation");
-                }
+                        if (utilisateur.getStatut() != StatutUtilisateur.EN_ATTENTE_VALIDATION) {
+                                throw new RuntimeException("Cette agence n'est pas en attente de validation");
+                        }
 
-                // 📄 Vérifier que tous les documents sont approuvés avant validation
-                if (utilisateur.getAgence() != null) {
-                        UUID agenceId = utilisateur.getAgence().getId();
-                        List<Verification> verifications = verificationRepository.findByAgenceId(agenceId);
+                        // 📄 Vérifier que tous les documents sont approuvés avant validation
+                        if (utilisateur.getAgence() != null) {
+                                UUID agenceId = utilisateur.getAgence().getId();
+                                log.info("🔍 Vérification des documents pour l'agence ID: {}", agenceId);
 
-                        // Si des documents existent, vérifier qu'ils sont tous approuvés
-                        if (!verifications.isEmpty()) {
-                                boolean hasPendingDocuments = verifications.stream()
-                                                .anyMatch(v -> v.getStatut() == StatutVerification.EN_ATTENTE);
-                                boolean hasRejectedDocuments = verifications.stream()
-                                                .anyMatch(v -> v.getStatut() == StatutVerification.REJETTEE);
+                                List<Verification> verifications = verificationRepository.findByAgenceId(agenceId);
+                                log.info("📄 Nombre de documents trouvés: {}", verifications.size());
 
-                                if (hasPendingDocuments) {
-                                        throw new RuntimeException(
-                                                        "Impossible de valider l'agence : des documents sont en attente de vérification. Veuillez vérifier tous les documents avant de valider l'agence.");
-                                }
+                                // Si des documents existent, vérifier qu'ils sont tous approuvés
+                                if (!verifications.isEmpty()) {
+                                        boolean hasPendingDocuments = verifications.stream()
+                                                        .anyMatch(v -> v.getStatut() == StatutVerification.EN_ATTENTE);
+                                        boolean hasRejectedDocuments = verifications.stream()
+                                                        .anyMatch(v -> v.getStatut() == StatutVerification.REJETTEE);
 
-                                if (hasRejectedDocuments) {
-                                        throw new RuntimeException(
-                                                        "Impossible de valider l'agence : certains documents ont été rejetés. L'agence doit soumettre de nouveaux documents.");
+                                        if (hasPendingDocuments) {
+                                                throw new RuntimeException(
+                                                                "Impossible de valider l'agence : des documents sont en attente de vérification. Veuillez vérifier tous les documents avant de valider l'agence.");
+                                        }
+
+                                        if (hasRejectedDocuments) {
+                                                throw new RuntimeException(
+                                                                "Impossible de valider l'agence : certains documents ont été rejetés. L'agence doit soumettre de nouveaux documents.");
+                                        }
                                 }
                         }
-                }
 
-                // Validation de l'agence
-                utilisateur.setStatut(StatutUtilisateur.ACTIF);
-                utilisateurRepository.save(utilisateur);
+                        // Validation de l'agence
+                        utilisateur.setStatut(StatutUtilisateur.ACTIF);
+                        utilisateurRepository.save(utilisateur);
+                        log.info("👤 Utilisateur agence activé: {}", utilisateur.getEmail());
 
-                // Mise à jour de l'entité Agence associée
-                if (utilisateur.getAgence() != null) {
-                        var agence = utilisateur.getAgence();
-                        agence.setStatut(StatutAgence.VERIFIEE);
-                        agenceRepository.save(agence);
-                        log.info("🏢 ENTITÉ AGENCE VALIDÉE - Nom: {}", agence.getNom());
+                        // Mise à jour de l'entité Agence associée
+                        if (utilisateur.getAgence() != null) {
+                                var agence = utilisateur.getAgence();
+                                log.info("🏢 Mise à jour du statut de l'agence: {}", agence.getNom());
+                                agence.setStatut(StatutAgence.VERIFIEE);
+                                agenceRepository.save(agence);
+                                log.info("✅ ENTITÉ AGENCE VALIDÉE - Nom: {}", agence.getNom());
 
-                        // Envoyer l'email de confirmation
-                        try {
-                                String subject = "Bienvenue sur Projet Immobilier - Votre agence est validée !";
-                                String htmlContent = "<h1>Félicitations " + utilisateur.getPrenom() + " !</h1>" +
-                                                "<p>Nous avons le plaisir de vous informer que votre agence <strong>"
-                                                + agence.getNom() + "</strong> a été validée par notre équipe.</p>" +
-                                                "<p>Vous pouvez désormais vous connecter à votre espace professionnel pour :</p>"
-                                                +
-                                                "<ul>" +
-                                                "<li>Publier vos annonces gratuitement</li>" +
-                                                "<li>Gérer vos agents</li>" +
-                                                "<li>Suivre vos statistiques</li>" +
-                                                "</ul>" +
-                                                "<p><a href='http://localhost:3000/login' style='background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Se connecter à mon espace</a></p>";
+                                // Envoyer l'email de confirmation (ne pas bloquer la validation si erreur)
+                                if (brevoService != null) {
+                                        try {
+                                                String subject = "Bienvenue sur Projet Immobilier - Votre agence est validée !";
+                                                String htmlContent = "<h1>Félicitations " + utilisateur.getPrenom() + " !</h1>" +
+                                                                "<p>Nous avons le plaisir de vous informer que votre agence <strong>"
+                                                                + agence.getNom() + "</strong> a été validée par notre équipe.</p>" +
+                                                                "<p>Vous pouvez désormais vous connecter à votre espace professionnel.</p>" +
+                                                                "<p><a href='http://localhost:3000/login' style='background-color: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Se connecter</a></p>";
 
-                                brevoService.sendEmail(utilisateur.getEmail(), utilisateur.getPrenom(), subject,
-                                                htmlContent, "Votre agence est validée !");
-                        } catch (Exception e) {
-                                log.error("Erreur lors de l'envoi de l'email de validation: {}", e.getMessage());
+                                                brevoService.sendEmail(utilisateur.getEmail(), utilisateur.getPrenom(), subject,
+                                                                htmlContent, "Votre agence est validée !");
+                                                log.info("📧 Email de validation envoyé à: {}", utilisateur.getEmail());
+                                        } catch (Exception e) {
+                                                log.error("⚠️ Erreur lors de l'envoi de l'email de validation: {}", e.getMessage());
+                                                // Ne pas bloquer la validation si l'email échoue
+                                        }
+                                } else {
+                                        log.warn("⚠️ BrevoService non disponible - Email non envoyé");
+                                }
                         }
-                }
 
-                log.info("✅ AGENCE VALIDÉE - ID: {} | Email: {} | Validée par: {}",
-                                utilisateurId, utilisateur.getEmail(), adminUsername);
-                return ResponseEntity.ok(Map.of(
-                                "message", "Agence validée avec succès",
-                                "agenceId", utilisateurId.toString(),
-                                "agenceEmail", utilisateur.getEmail(),
-                                "status", "VALIDÉE"));
+                        log.info("✅ AGENCE VALIDÉE - ID: {} | Email: {} | Validée par: {}",
+                                        utilisateurId, utilisateur.getEmail(), adminUsername);
+                        return ResponseEntity.ok(Map.of(
+                                        "message", "Agence validée avec succès",
+                                        "agenceId", utilisateurId.toString(),
+                                        "agenceEmail", utilisateur.getEmail(),
+                                        "status", "VALIDÉE"));
+
+                } catch (RuntimeException e) {
+                        log.error("❌ Erreur lors de la validation de l'agence {}: {}", utilisateurId, e.getMessage());
+                        return ResponseEntity.badRequest().body(Map.of(
+                                        "error", e.getMessage(),
+                                        "message", "Échec de la validation"));
+                } catch (Exception e) {
+                        log.error("❌ Erreur interne lors de la validation de l'agence {}: {}", utilisateurId, e.getMessage(), e);
+                        return ResponseEntity.status(500).body(Map.of(
+                                        "error", "Erreur interne du serveur",
+                                        "message", "Une erreur inattendue s'est produite"));
+                }
         }
 
         /**
@@ -306,12 +325,61 @@ public class AdminValidationController {
                 }
 
                 Resource resource = new FileSystemResource(file);
+                
+                // Détecter le type MIME selon l'extension du fichier
+                String fileName = file.getName();
+                MediaType mediaType = detectMediaType(fileName);
+                
+                // Créer un nom de fichier plus lisible avec le type de document
+                String typeDoc = verification.getTypeDocumentAgence() != null 
+                                ? verification.getTypeDocumentAgence().toString() 
+                                : "document";
+                String extension = getFileExtension(fileName);
+                String downloadName = typeDoc + "_" + verificationId.toString().substring(0, 8) + extension;
+
+                log.info("📄 Téléchargement: {} (type: {})", downloadName, mediaType);
 
                 return ResponseEntity.ok()
-                                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                                .contentType(mediaType)
                                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=\"" + file.getName() + "\"")
+                                                "attachment; filename=\"" + downloadName + "\"")
                                 .body(resource);
+        }
+
+        /**
+         * Détecte le type MIME selon l'extension du fichier
+         */
+        private MediaType detectMediaType(String fileName) {
+                String ext = getFileExtension(fileName).toLowerCase();
+                switch (ext) {
+                        case ".pdf":
+                                return MediaType.APPLICATION_PDF;
+                        case ".jpg":
+                        case ".jpeg":
+                                return MediaType.IMAGE_JPEG;
+                        case ".png":
+                                return MediaType.IMAGE_PNG;
+                        case ".gif":
+                                return MediaType.IMAGE_GIF;
+                        case ".webp":
+                                return MediaType.valueOf("image/webp");
+                        case ".doc":
+                                return MediaType.valueOf("application/msword");
+                        case ".docx":
+                                return MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+                        default:
+                                return MediaType.APPLICATION_OCTET_STREAM;
+                }
+        }
+
+        /**
+         * Extrait l'extension du fichier
+         */
+        private String getFileExtension(String fileName) {
+                if (fileName == null || fileName.lastIndexOf('.') == -1) {
+                        return "";
+                }
+                return fileName.substring(fileName.lastIndexOf('.'));
         }
 
         /**

@@ -102,7 +102,7 @@ public class AgenceServiceImpl implements AgenceService {
         existingAgence.setVille(agence.getVille());
         existingAgence.setPays(agence.getPays());
         existingAgence.setCodePostal(agence.getCodePostal());
-        existingAgence.setNumeroLicence(agence.getNumeroLicence());
+        existingAgence.setNina(agence.getNina());
         existingAgence.setSiteWeb(agence.getSiteWeb());
         existingAgence.setLogoUrl(agence.getLogoUrl());
         existingAgence.setDescription(agence.getDescription());
@@ -136,12 +136,6 @@ public class AgenceServiceImpl implements AgenceService {
     @Transactional(readOnly = true)
     public boolean existsByTelephone(String telephone) {
         return agenceRepository.existsByTelephone(telephone);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByNumeroLicence(String numeroLicence) {
-        return agenceRepository.existsByNumeroLicence(numeroLicence);
     }
 
     @Override
@@ -222,14 +216,11 @@ public class AgenceServiceImpl implements AgenceService {
         agence.setVille(agenceData.getVille() != null ? agenceData.getVille() : agence.getVille());
         agence.setPays(agenceData.getPays() != null ? agenceData.getPays() : agence.getPays());
         agence.setCodePostal(agenceData.getCodePostal() != null ? agenceData.getCodePostal() : agence.getCodePostal());
-        agence.setNumeroLicence(agenceData.getNumeroLicence() != null ? agenceData.getNumeroLicence() : agence.getNumeroLicence());
         agence.setSiteWeb(agenceData.getSiteWeb() != null ? agenceData.getSiteWeb() : agence.getSiteWeb());
         agence.setLogoUrl(agenceData.getLogoUrl() != null ? agenceData.getLogoUrl() : agence.getLogoUrl());
         agence.setDescription(agenceData.getDescription() != null ? agenceData.getDescription() : agence.getDescription());
-        agence.setNinea(agenceData.getNinea() != null ? agenceData.getNinea() : agence.getNinea());
+        agence.setNina(agenceData.getNina() != null ? agenceData.getNina() : agence.getNina());
         agence.setHorairesOuverture(agenceData.getHorairesOuverture() != null ? agenceData.getHorairesOuverture() : agence.getHorairesOuverture());
-        agence.setVisitePayante(agenceData.getVisitePayante() != null ? agenceData.getVisitePayante() : agence.getVisitePayante());
-        agence.setTarifVisite(agenceData.getTarifVisite() != null ? agenceData.getTarifVisite() : agence.getTarifVisite());
 
         return agenceRepository.save(agence);
     }

@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import React, { useState } from "react";
 import {
@@ -41,7 +43,7 @@ export default function AgenceAnnonces() {
 
     const fetchUserProfile = async (token: string) => {
       try {
-        const response = await fetch("http://localhost:8080/api/auth/profile", {
+        const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         if (response.ok) {
@@ -58,7 +60,7 @@ export default function AgenceAnnonces() {
 
     const fetchAnnonces = async () => {
       try {
-        const response = await fetch("http://localhost:8080/api/annonces/mes-annonces", {
+        const response = await fetch(`${API_BASE_URL}/api/annonces/mes-annonces`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -84,7 +86,7 @@ export default function AgenceAnnonces() {
               datePublication: new Date().toISOString(),
               prix: item.prix || 0,
               image: item.images && item.images.length > 0 
-                ? (item.images[0].startsWith("http") ? item.images[0] : `http://localhost:8080${item.images[0]}`)
+                ? (item.images[0].startsWith("http") ? item.images[0] : `${API_BASE_URL}${item.images[0]}`)
                 : "/images/Appartement a sotuba.jpg",
               createdById: item.createdById
             };

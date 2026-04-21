@@ -1,6 +1,4 @@
-// ===============================
-// 🔐 SÉCURITÉ FRONTEND - VALIDATION
-// ===============================
+import { API_BASE_URL } from "@/services/api";
 
 export interface LoginCredentials {
   username: string;
@@ -254,7 +252,7 @@ export class TokenManager {
 // ===============================
 
 export class SecureApiClient {
-  private static baseURL = 'http://localhost:8080';
+  private static baseURL = `${API_BASE_URL}`;
   
   // Requête avec authentification automatique
   static async authenticatedRequest<T>(

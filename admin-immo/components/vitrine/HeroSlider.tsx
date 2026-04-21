@@ -58,52 +58,52 @@ export default function HeroSlider({ biens }: HeroSliderProps) {
       </AnimatePresence>
 
       {/* Main Content */}
-      <div className="relative z-10 h-full container-custom flex items-center pt-24">
-        <div className="max-w-4xl">
+      <div className="relative z-10 h-full container-custom flex items-center justify-center lg:justify-start pt-24">
+        <div className="max-w-4xl text-center lg:text-left px-4">
           <motion.div
             key={index}
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <motion.div 
               initial={{ scaleX: 0 }} 
               animate={{ scaleX: 1 }} 
               transition={{ duration: 0.8, delay: 0.5 }}
-              className="h-1 w-16 bg-blue-600 mb-8 rounded-full" 
+              className="h-1 w-16 bg-blue-600 mb-6 sm:mb-8 rounded-full mx-auto lg:mx-0" 
             />
             
-            <span className="inline-block text-blue-400 text-xs font-black uppercase tracking-[0.4em] mb-6">
+            <span className="inline-block text-blue-400 text-[10px] sm:text-xs font-black uppercase tracking-[0.4em] mb-4 sm:mb-6">
               {current?.typeTransaction === 'LOCATION' ? 'Opportunité Location' : 'Exclusivité Vente'}
             </span>
             
-            <h1 className="text-5xl md:text-7xl lg:text-[5.5rem] font-black text-white mb-8 leading-[1.05] tracking-tighter drop-shadow-2xl">
+            <h1 className="text-3xl sm:text-5xl md:text-7xl lg:text-[5.5rem] font-black text-white mb-6 md:mb-8 leading-[1.2] sm:leading-[1.1] md:leading-[1.05] tracking-tighter drop-shadow-2xl">
               {current?.libelle || "L'excellence Immobilière."}
             </h1>
             
-            <p className="text-lg md:text-xl text-slate-300 mb-10 max-w-2xl font-medium leading-relaxed opacity-90">
+            <p className="text-xs sm:text-lg md:text-xl text-slate-300 mb-8 md:mb-10 max-w-2xl font-medium leading-relaxed opacity-90 line-clamp-3 md:line-clamp-none mx-auto lg:mx-0">
               {current?.description?.substring(0, 160) || "Accédez aux adresses les plus prestigieuses de Bamako. Nos conseillers vous accompagnent dans l'acquisition de vos biens d'exception."}
               {current?.description?.length > 160 ? "..." : ""}
             </p>
 
-            <div className="flex flex-wrap items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-6">
               <Link
                 href="#biens"
-                className="group relative px-10 py-5 bg-white text-slate-900 font-black uppercase tracking-widest text-xs rounded-[2rem] overflow-hidden active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_60px_rgba(255,255,255,0.25)]"
+                className="group relative w-full sm:w-auto px-8 py-4 sm:px-10 sm:py-5 bg-white text-slate-900 font-black uppercase tracking-widest text-[10px] sm:text-xs rounded-2xl sm:rounded-[2rem] overflow-hidden active:scale-95 transition-all shadow-[0_0_40px_rgba(255,255,255,0.15)] hover:shadow-[0_0_60px_rgba(255,255,255,0.25)] flex justify-center items-center"
               >
                 <div className="absolute inset-0 bg-blue-600 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 <span className="relative z-10 group-hover:text-white flex items-center gap-3 transition-colors duration-300">
-                  Découvrir la collection
+                  Découvrir
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform duration-300" />
                 </span>
               </Link>
               
               {current?.prixCalculer && (
-                <div className="flex flex-col">
-                  <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">À partir de</span>
-                  <span className="text-3xl font-black text-white tracking-tight">
+                <div className="flex flex-col sm:border-l sm:border-white/20 sm:pl-6 text-center sm:text-left">
+                  <span className="text-[9px] sm:text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">À partir de</span>
+                  <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                     {new Intl.NumberFormat("fr-FR").format(current.prixCalculer)}
-                    <span className="text-sm font-medium ml-2 text-slate-400">FCFA</span>
+                    <span className="text-xs font-medium ml-2 text-slate-400">FCFA</span>
                   </span>
                 </div>
               )}

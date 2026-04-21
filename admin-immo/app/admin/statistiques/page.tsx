@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import {
@@ -47,7 +49,7 @@ export default function StatistiquesPage() {
 
       console.log("📊 Récupération des statistiques détaillées depuis le backend...");
       
-      const response = await fetch("http://localhost:8080/api/admin/dashboard/stats", {
+      const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,

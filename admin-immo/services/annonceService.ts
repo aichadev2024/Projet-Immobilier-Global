@@ -1,21 +1,8 @@
+import { API_BASE_URL, apiFetch } from "@/services/api";
 export async function getAnnonces() {
   try {
-    const res = await fetch("http://localhost:8080/api/annonces", {
-      cache: "no-store",
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!res.ok) {
-      if (res.status === 404) {
-        console.warn("Aucune annonce trouvée, utilisation des données de démonstration");
-        return getDemoAnnonces();
-      }
-      throw new Error(`Erreur HTTP: ${res.status} - ${res.statusText}`);
-    }
-
-    const data = await res.json();
+    const data = await apiFetch("/api/annonces", { cache: "no-store" });
+    const realAnnonces = Array.isArray(data) ? data : [];
     const realAnnonces = Array.isArray(data) ? data : [];
     
     // Ajouter les annonces de démonstration en plus des annonces réelles

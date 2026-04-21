@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, ShieldCheck, ArrowLeft, RefreshCw } from 'lucide-react'
 import Link from 'next/link'
 import BrandMark from '@/components/vitrine/BrandMark'
+import { API_BASE_URL, apiFetch } from '@/services/api'
 
 export default function ValidateOTPPage() {
   const [otpCode, setOtpCode] = useState('')
@@ -41,34 +42,24 @@ export default function ValidateOTPPage() {
     setMessage('')
 
     try {
-      const response = await fetch('http://localhost:8080/auth/verify-otp', {
+      const data = await apiFetch("/auth/verify-otp", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           username: username,
           code: otpCode.trim()
         })
-      })
+      });
 
-      const data = await response.json()
-
-      if (response.ok) {
-        setIsSuccess(true)
-        setMessage(data.message || 'Validation réussie !')
-        
-        // Redirection vers login pour tous (pas de connexion auto)
-        setTimeout(() => {
-          router.push('/login?activated=true');
-        }, 2000);
-      } else {
-        setIsSuccess(false)
-        setMessage(data.message || data.error || 'Code invalide ou expiré');
-      }
-    } catch (error) {
+      setIsSuccess(true)
+      setMessage(data.message || 'Validation réussie !')
+      
+      // Redirection vers login pour tous (pas de connexion auto)
+      setTimeout(() => {
+        router.push('/login?activated=true');
+      }, 2000);
+    } catch (error: any) {
       setIsSuccess(false)
-      setMessage('Erreur de connexion. Veuillez réessayer.');
+      setMessage(error.message || 'Erreur de connexion. Veuillez réessayer.');
     } finally {
       setIsLoading(false)
     }
@@ -84,28 +75,18 @@ export default function ValidateOTPPage() {
     setMessage('')
 
     try {
-      const response = await fetch('http://localhost:8080/auth/otp/resend', {
+      const data = await apiFetch("/auth/otp/resend", {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           username: username
         })
-      })
+      });
 
-      const data = await response.json()
-
-      if (response.ok) {
-        setIsSuccess(true)
-        setMessage(data.message || 'Nouveau code envoyé ! Consultez vos SMS ou Emails.')
-      } else {
-        setIsSuccess(false)
-        setMessage(data.message || data.error || 'Veuillez attendre avant de renvoyer un code')
-      }
-    } catch (error) {
+      setIsSuccess(true)
+      setMessage(data.message || 'Nouveau code envoyé ! Consultez vos SMS ou Emails.')
+    } catch (error: any) {
       setIsSuccess(false)
-      setMessage('Erreur de connexion. Veuillez réessayer.')
+      setMessage(error.message || 'Erreur de connexion. Veuillez réessayer.')
     } finally {
       setIsLoading(false)
     }

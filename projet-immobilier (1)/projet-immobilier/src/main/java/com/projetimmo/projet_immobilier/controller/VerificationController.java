@@ -101,7 +101,7 @@ public class VerificationController {
                 .ville((String) request.getOrDefault("ville", ""))
                 .pays((String) request.getOrDefault("pays", ""))
                 .codePostal((String) request.getOrDefault("codePostal", ""))
-                .numeroLicence((String) request.getOrDefault("numeroLicence", ""))
+                .nina((String) request.getOrDefault("nina", ""))
                 .siteWeb((String) request.getOrDefault("siteWeb", ""))
                 .logoUrl((String) request.getOrDefault("logoUrl", ""))
                 .description((String) request.getOrDefault("description", ""))

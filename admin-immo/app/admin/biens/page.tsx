@@ -6,6 +6,7 @@ import {
   Building2, Eye, MapPin, Home, Bed, Bath, Square,
   AlertCircle, CheckCircle, X, Search,
 } from "lucide-react";
+import { API_BASE_URL } from "@/services/api";
 
 interface BienImmobilier {
   id: number; libelle: string; description: string; adresse: string;
@@ -33,7 +34,7 @@ export default function BiensAdmin() {
     try {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) { router.push("/login"); return; }
-      const response = await fetch("http://localhost:8080/api/admin/biens", {
+      const response = await fetch(`${API_BASE_URL}/api/admin/biens`, {
         headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
       });
       if (response.ok) { setBiens(await response.json()); }
@@ -46,7 +47,7 @@ export default function BiensAdmin() {
     try {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) { router.push("/login"); return; }
-      const res = await fetch(`http://localhost:8080/api/admin/biens/${id}/valider`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/biens/${id}/valider`, {
         method: "PUT", headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
       });
       if (res.ok) await fetchBiens(); else setError("Erreur lors de la validation");
@@ -58,7 +59,7 @@ export default function BiensAdmin() {
     try {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) { router.push("/login"); return; }
-      const res = await fetch(`http://localhost:8080/api/admin/biens/${id}/refuser`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/biens/${id}/refuser`, {
         method: "PUT", headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
       });
       if (res.ok) await fetchBiens(); else setError("Erreur lors du refus");
@@ -105,13 +106,13 @@ export default function BiensAdmin() {
         <div className="absolute -top-16 -right-16 w-64 h-64 bg-white/5 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-8 -left-8 w-48 h-48 bg-purple-400/10 rounded-full blur-2xl"></div>
         <div className="relative flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30 shadow-xl">
-              <Building2 className="w-7 h-7 text-white" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-white/20 backdrop-blur-sm rounded-xl sm:rounded-2xl flex items-center justify-center border border-white/30 shadow-xl shrink-0">
+              <Building2 className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-black text-white tracking-tight">Biens Immobiliers</h1>
-              <p className="text-indigo-100 text-sm font-medium mt-0.5">Gérez et validez les biens des agences</p>
+              <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight leading-tight">Biens Immobiliers</h1>
+              <p className="text-indigo-100 text-[11px] sm:text-sm font-medium mt-0.5">Gérez et validez les biens des agences</p>
             </div>
           </div>
           <div className="hidden md:flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/25 rounded-xl px-4 py-2">
@@ -130,23 +131,23 @@ export default function BiensAdmin() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: "Total", value: biens.length, color: "from-indigo-500 to-indigo-600", bg: "bg-indigo-50 border-indigo-200", text: "text-indigo-700", numColor: "text-indigo-600", icon: Building2 },
-          { label: "En attente", value: biens.filter(b => b.statutBien === "EN_ATTENTE").length, color: "from-amber-500 to-orange-500", bg: "bg-amber-50 border-amber-200", text: "text-amber-700", numColor: "text-amber-600", icon: AlertCircle },
-          { label: "Disponibles", value: biens.filter(b => b.statutBien === "DISPONIBLE" || b.statutBien === "VALIDE").length, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", numColor: "text-emerald-600", icon: CheckCircle },
-          { label: "Indisponibles", value: biens.filter(b => ["LOUE", "VENDU", "INDISPONIBLE"].includes(b.statutBien)).length, color: "from-red-500 to-rose-500", bg: "bg-red-50 border-red-200", text: "text-red-700", numColor: "text-red-600", icon: X },
-        ].map((s) => (
-          <div key={s.label} className={`rounded-2xl border ${s.bg} p-5 shadow-sm`}>
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center mb-3 shadow-md`}>
-              <s.icon className="w-5 h-5 text-white" />
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          {[
+            { label: "Total", value: biens.length, color: "from-indigo-500 to-indigo-600", bg: "bg-indigo-50 border-indigo-200", text: "text-indigo-700", numColor: "text-indigo-600", icon: Building2 },
+            { label: "Attente", value: biens.filter(b => b.statutBien === "EN_ATTENTE").length, color: "from-amber-500 to-orange-500", bg: "bg-amber-50 border-amber-200", text: "text-amber-700", numColor: "text-amber-600", icon: AlertCircle },
+            { label: "Validés", value: biens.filter(b => b.statutBien === "DISPONIBLE" || b.statutBien === "VALIDE").length, color: "from-emerald-500 to-green-500", bg: "bg-emerald-50 border-emerald-200", text: "text-emerald-700", numColor: "text-emerald-600", icon: CheckCircle },
+            { label: "Indispo.", value: biens.filter(b => ["LOUE", "VENDU", "INDISPONIBLE"].includes(b.statutBien)).length, color: "from-red-500 to-rose-500", bg: "bg-red-50 border-red-200", text: "text-red-700", numColor: "text-red-600", icon: X },
+          ].map((s) => (
+            <div key={s.label} className={`rounded-2xl border ${s.bg} p-4 sm:p-5 shadow-sm transition-all hover:shadow-md`}>
+              <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center mb-2 sm:mb-3 shadow-md`}>
+                <s.icon className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 sm:mb-1 ${s.text}`}>{s.label}</p>
+              <p className={`text-xl sm:text-3xl font-black ${s.numColor}`}>{s.value}</p>
             </div>
-            <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${s.text}`}>{s.label}</p>
-            <p className={`text-3xl font-black ${s.numColor}`}>{s.value}</p>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
       {/* Search */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
@@ -164,9 +165,13 @@ export default function BiensAdmin() {
           <table className="w-full">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
-                {["Bien", "Type", "Propriétaire", "Prix", "Statut", "Date", "Actions"].map((h, i) => (
-                  <th key={h} className={`px-6 py-4 text-xs font-bold text-slate-600 uppercase tracking-wider ${i === 6 ? "text-right" : "text-left"}`}>{h}</th>
-                ))}
+                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Bien</th>
+                <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Type</th>
+                <th className="hidden sm:table-cell px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Propriétaire</th>
+                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Prix</th>
+                <th className="px-4 sm:px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Statut</th>
+                <th className="hidden xl:table-cell px-6 py-4 text-left text-xs font-bold text-slate-600 uppercase tracking-wider">Date</th>
+                <th className="px-4 sm:px-6 py-4 text-right text-xs font-bold text-slate-600 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -183,20 +188,23 @@ export default function BiensAdmin() {
               ) : (
                 filteredBiens.map((bien) => (
                   <tr key={bien.id} className="hover:bg-indigo-50/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900">{bien.libelle}</div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3 text-indigo-400" />{bien.adresse}</div>
+                    <td className="px-4 sm:px-6 py-4">
+                      <div className="font-bold text-slate-900 text-sm">{bien.libelle}</div>
+                      <div className="text-[10px] sm:text-xs text-slate-500 flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3 text-indigo-400" />{bien.adresse}</div>
+                      <div className="lg:hidden mt-2">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-50 text-indigo-600 border border-indigo-100">{bien.typeBien.libelle}</span>
+                      </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="hidden lg:table-cell px-6 py-4">
                       <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">{bien.typeBien.libelle}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="hidden sm:table-cell px-6 py-4">
                       <div className="font-semibold text-slate-800 text-sm">{bien.utilisateur.nom}</div>
                       <div className="text-xs text-slate-500">{bien.utilisateur.email}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900 text-sm">{bien.prixCalculer.toLocaleString()} FCFA</div>
-                      <div className="text-xs text-slate-500 font-medium">{bien.transactionType === 'VENTE' ? 'Vente' : 'Location'}</div>
+                    <td className="px-4 sm:px-6 py-4">
+                      <div className="font-bold text-slate-900 text-sm">{bien.prixCalculer.toLocaleString()}</div>
+                      <div className="text-[10px] sm:text-xs text-slate-500 font-medium lowercase">FCFA / {bien.transactionType === 'VENTE' ? 'Vente' : 'Loc.'}</div>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${
@@ -236,9 +244,9 @@ export default function BiensAdmin() {
 
       {/* Detail Modal */}
       {showDetailsModal && selectedBien && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-200 sticky top-0 bg-white z-10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center border border-indigo-200">
                   <Building2 className="w-5 h-5 text-indigo-600" />
@@ -253,7 +261,7 @@ export default function BiensAdmin() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-6">
+            <div className="p-4 sm:p-6 space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3">
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider">Informations</h4>
@@ -278,10 +286,10 @@ export default function BiensAdmin() {
               {selectedBien.images && selectedBien.images.length > 0 && (
                 <div>
                   <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Médias ({selectedBien.images.length})</h4>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 xs:grid-cols-3 gap-2 sm:gap-3">
                     {selectedBien.images.map((image, i) => (
                       <div key={i} className="aspect-square rounded-xl overflow-hidden border border-slate-200">
-                        <img src={image.startsWith("http") ? image : `http://localhost:8080${image}`} alt={`Image ${i+1}`}
+                        <img src={image.startsWith("http") ? image : `${API_BASE_URL}${image}`} alt={`Image ${i+1}`}
                           className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                           onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/300x300/f1f5f9/94a3b8?text=Image"; }} />
                       </div>

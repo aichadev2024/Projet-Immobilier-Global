@@ -21,7 +21,7 @@ export default function BrandMark({
         <Home className="w-5 h-5 text-white" />
       </div>
       <span className={`text-xl font-extrabold tracking-tight ${textClass}`}>
-        Bamako<span className={accentClass}>Home</span>
+        Ika<span className={accentClass}>Bayt</span>
       </span>
     </Link>
   );

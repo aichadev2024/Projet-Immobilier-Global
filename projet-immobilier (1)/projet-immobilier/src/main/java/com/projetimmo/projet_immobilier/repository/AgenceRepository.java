@@ -18,8 +18,6 @@ public interface AgenceRepository extends JpaRepository<Agence, UUID> {
 
     Optional<Agence> findByTelephone(String telephone);
 
-    Optional<Agence> findByNumeroLicence(String numeroLicence);
-
     List<Agence> findByStatut(StatutAgence statut);
 
     List<Agence> findByVille(String ville);
@@ -37,9 +35,9 @@ public interface AgenceRepository extends JpaRepository<Agence, UUID> {
 
     boolean existsByTelephone(String telephone);
 
-    boolean existsByNumeroLicence(String numeroLicence);
-    
-    boolean existsByNinea(String ninea);
+    boolean existsByNina(String nina);
+
+    Optional<Agence> findByNina(String nina);
     
     List<Agence> findByIsDeletedFalse();
 

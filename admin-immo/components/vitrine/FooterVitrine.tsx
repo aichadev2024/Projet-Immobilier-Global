@@ -60,10 +60,10 @@ export default function FooterVitrine() {
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[40rem] h-[20rem] bg-blue-600/5 blur-[120px] pointer-events-none" />
       
       {/* Trust Banner */}
-      <div className="border-b border-white/[0.05] py-12 relative overflow-hidden">
+      <div className="border-b border-white/[0.05] py-8 sm:py-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900/10 via-slate-900 to-indigo-900/10" />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {[
               { icon: Building2, label: "Agences partenaires", value: "50+" },
               { icon: Shield, label: "Paiement sécurisé", value: "100%" },
@@ -76,14 +76,14 @@ export default function FooterVitrine() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
-                className="flex items-center gap-4"
+                className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3 sm:gap-4"
               >
-                <div className="w-14 h-14 rounded-[1.25rem] bg-white/[0.03] border border-white/5 flex items-center justify-center backdrop-blur-md">
-                  <item.icon className="w-6 h-6 text-blue-400" />
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-[1.25rem] bg-white/[0.03] border border-white/5 flex items-center justify-center backdrop-blur-md shrink-0">
+                  <item.icon className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                 </div>
                 <div className="flex flex-col">
-                  <p className="text-white font-black text-xl tracking-tight">{item.value}</p>
-                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{item.label}</p>
+                  <p className="text-white font-black text-lg sm:text-xl tracking-tight">{item.value}</p>
+                  <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">{item.label}</p>
                 </div>
               </motion.div>
             ))}
@@ -101,7 +101,7 @@ export default function FooterVitrine() {
                 <Home className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-black text-white tracking-tight">
-                Bamako<span className="text-blue-500">Home</span>
+                Ika<span className="text-blue-500">Bayt</span>
               </span>
             </Link>
             <p className="text-slate-500 text-sm mb-6 leading-relaxed">
@@ -127,8 +127,8 @@ export default function FooterVitrine() {
                 <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center shrink-0">
                   <Mail className="w-4 h-4 text-blue-400" />
                 </div>
-                <a href="mailto:contact@bamakohome.com" className="hover:text-blue-400 transition-colors">
-                  contact@bamakohome.com
+                <a href="mailto:contact@ikabayt.com" className="hover:text-blue-400 transition-colors">
+                  contact@ikabayt.com
                 </a>
               </li>
             </ul>
@@ -233,7 +233,7 @@ export default function FooterVitrine() {
         <div className="mt-20 pt-8 border-t border-white/[0.05]">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <p className="text-xs font-medium text-slate-500">
-              © {new Date().getFullYear()} BamakoHome. Tous droits réservés.
+              © {new Date().getFullYear()} IkaBayt. Tous droits réservés.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-bold text-slate-500">
               <Link href="#" className="hover:text-blue-400 transition-colors">Politique de confidentialité</Link>

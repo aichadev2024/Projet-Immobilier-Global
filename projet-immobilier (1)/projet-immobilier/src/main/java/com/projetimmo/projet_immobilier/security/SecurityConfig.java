@@ -172,8 +172,16 @@ public class SecurityConfig {
         public CorsConfigurationSource corsConfigurationSource() {
                 CorsConfiguration config = new CorsConfiguration();
 
-                // Origines autorisées (configuration par environnement)
-                config.setAllowedOrigins(allowedOrigins);
+                // 🔥 Mode développement: autoriser TOUTES les origines (pour test mobile)
+                // En production, utiliser la configuration allowedOrigins
+                config.addAllowedOriginPattern("*");
+                
+                // Si vous voulez être plus restrictif, décommentez:
+                // config.setAllowedOrigins(Arrays.asList(
+                //     "http://localhost:3000", 
+                //     "http://localhost:3001",
+                //     "http://192.168.1.18:3000"
+                // ));
 
                 // Méthodes HTTP autorisées
                 config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
@@ -188,13 +196,14 @@ public class SecurityConfig {
                                 "Access-Control-Request-Method",
                                 "Access-Control-Request-Headers"));
 
-                // Credentials autorisés
-                config.setAllowCredentials(true);
+                // Credentials autorisés (désactivé pour * en dev, activer en prod)
+                // config.setAllowCredentials(true);
 
                 // Exposed headers pour le frontend
                 config.setExposedHeaders(Arrays.asList(
                                 "X-Total-Count",
-                                "X-Page-Count"));
+                                "X-Page-Count",
+                                "Authorization"));
 
                 // Durée de pré-flight (15 minutes)
                 config.setMaxAge(900L);

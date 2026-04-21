@@ -1,4 +1,6 @@
 "use client";
+import { API_BASE_URL } from "@/services/api";
+
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -91,7 +93,7 @@ export default function AdminsPage() {
 
       try {
         // Récupérer les données complètes de l'utilisateur depuis le backend
-        const response = await fetch("http://localhost:8080/api/utilisateurs/me", {
+        const response = await fetch(`${API_BASE_URL}/api/utilisateurs/me`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -150,7 +152,7 @@ export default function AdminsPage() {
 
       console.log("📡 Récupération des administrateurs depuis le backend...");
       
-      const response = await fetch("http://localhost:8080/api/utilisateurs", {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -198,7 +200,7 @@ export default function AdminsPage() {
             id: "1",
             nom: "Admin",
             prenom: "Super",
-            email: "admin@bamakohome.ml",
+            email: "admin@ikabayt.ml",
             nomUtilisateur: "admin",
             telephone: "+223 70 00 00 00",
             role: "ADMIN",
@@ -259,7 +261,7 @@ export default function AdminsPage() {
 
       console.log("👨‍💼 Création d'un nouvel administrateur...");
       
-      const response = await fetch("http://localhost:8080/auth/register", {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -329,7 +331,7 @@ export default function AdminsPage() {
 
       console.log("👨‍💼 Mise à jour de l'administrateur...");
       
-      const response = await fetch(`http://localhost:8080/api/utilisateurs/${selectedAdmin.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/${selectedAdmin.id}`, {
         method: "PUT",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -411,7 +413,7 @@ export default function AdminsPage() {
 
       console.log("🗑️ Suppression de l'administrateur...");
       
-      const response = await fetch(`http://localhost:8080/api/utilisateurs/${adminId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/utilisateurs/${adminId}`, {
         method: "DELETE",
         headers: {
           "Authorization": `Bearer ${token}`,

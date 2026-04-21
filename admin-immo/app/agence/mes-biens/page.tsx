@@ -81,7 +81,7 @@ export default function MesBiensPage() {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       
-      const response = await fetch('http://localhost:8080/api/biens/agence/mes-biens', {
+      const response = await fetch(`${API_BASE_URL}/api/biens/agence/mes-biens`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -137,7 +137,7 @@ export default function MesBiensPage() {
       setDocumentsLoading(true)
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       
-      const response = await fetch(`http://localhost:8080/api/documents-bien/bien/${bienId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/documents-bien/bien/${bienId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -163,7 +163,7 @@ export default function MesBiensPage() {
       formData.append('file', file)
       formData.append('type', type)
       
-      const response = await fetch(`http://localhost:8080/api/documents-bien/upload/${bienId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/documents-bien/upload/${bienId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -189,7 +189,7 @@ export default function MesBiensPage() {
     try {
       const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken')
       
-      const response = await fetch(`http://localhost:8080/api/documents-bien/${documentId}/download`, {
+      const response = await fetch(`${API_BASE_URL}/api/documents-bien/${documentId}/download`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -264,22 +264,23 @@ export default function MesBiensPage() {
       {/* Header */}
       <header className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <Building className="h-7 w-7 text-white" />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 py-4 sm:py-0 sm:h-16">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0">
+                <Building className="h-5 w-5 sm:h-7 sm:w-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Mes biens</h1>
-                <p className="text-sm text-gray-600 font-medium">Gestion de vos annonces immobilières</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Mes biens</h1>
+                <p className="text-xs sm:text-sm text-gray-600 font-medium hidden sm:block">Gestion de vos annonces immobilières</p>
               </div>
             </div>
             <Button 
               onClick={() => router.push('/agence/ajouter-bien')}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg w-full sm:w-auto"
             >
               <Plus className="h-5 w-5 mr-2" />
-              Ajouter un bien
+              <span className="hidden sm:inline">Ajouter un bien</span>
+              <span className="sm:hidden">Ajouter</span>
             </Button>
           </div>
         </div>

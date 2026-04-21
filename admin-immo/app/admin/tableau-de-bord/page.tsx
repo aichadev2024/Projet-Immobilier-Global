@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { API_BASE_URL } from "@/services/api";
 
 interface StatCard {
   title: string;
@@ -66,9 +67,9 @@ export default function AdminDashboard() {
         return;
       }
 
-      console.log("📡 Appel API vers: http://localhost:8080/api/admin/dashboard/stats");
+      console.log(`📡 Appel API vers: ${API_BASE_URL}/api/admin/dashboard/stats`);
       
-      const statsResponse = await fetch("http://localhost:8080/api/admin/dashboard/stats", {
+      const statsResponse = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -161,7 +162,7 @@ export default function AdminDashboard() {
       }
 
       // Appel au backend pour les statistiques de validation (fallback si activity n'existe pas)
-      const validationResponse = await fetch("http://localhost:8080/api/admin/validation/statistiques", {
+      const validationResponse = await fetch(`${API_BASE_URL}/api/admin/validation/statistiques`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -304,7 +305,7 @@ export default function AdminDashboard() {
       {/* Hero Section Admin */}
       <motion.div 
         variants={itemVariants}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-8 text-white shadow-2xl"
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 p-6 sm:p-8 text-white shadow-2xl"
       >
         <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2230%22%20r%3D%222%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50" />
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -315,11 +316,11 @@ export default function AdminDashboard() {
               </div>
               <span className="text-indigo-100 text-sm font-medium">Espace Administrateur</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
               Tableau de <span className="text-yellow-300">bord</span>
             </h1>
             <p className="text-indigo-100 text-lg max-w-md">
-              Vue d'ensemble et gestion complète de la plateforme BamakoHome
+              Vue d'ensemble et gestion complète de la plateforme IkaBayt
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -343,7 +344,7 @@ export default function AdminDashboard() {
             whileHover={{ y: -5 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.color} p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300`}>
+            <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br ${stat.color} p-5 sm:p-6 text-white shadow-lg hover:shadow-xl transition-all duration-300`}>
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
               <div className="relative">
                 <div className="flex items-center justify-between mb-4">
@@ -370,7 +371,7 @@ export default function AdminDashboard() {
       >
         {/* Graphique Section */}
         <motion.div variants={itemVariants} className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 h-full">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 sm:p-6 h-full">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-indigo-100 rounded-lg">
@@ -396,7 +397,7 @@ export default function AdminDashboard() {
 
         {/* Activité récente */}
         <motion.div variants={itemVariants}>
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-6 h-full">
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 p-5 sm:p-6 h-full">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
                 <div className="p-2 bg-amber-100 rounded-lg">
