@@ -46,6 +46,8 @@ application-dev.properties
 application-prod.properties
 
 # Uploads (ne pas versionner les fichiers uploadés)
+uploads/
+projet-immobilier (1)/projet-immobilier/uploads/
 uploads/agences/
 uploads/documents/
 uploads/documents-biens/
