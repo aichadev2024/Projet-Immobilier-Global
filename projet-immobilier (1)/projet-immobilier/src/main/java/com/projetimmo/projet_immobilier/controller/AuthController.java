@@ -122,11 +122,11 @@ public class AuthController {
             @RequestParam(value = "nomAgence", required = false) String nomAgence,
             @RequestParam(value = "adresseAgence", required = false) String adresseAgence,
             @RequestParam(value = "telephoneAgence", required = false) String telephoneAgence,
-            @RequestParam(value = "ninea", required = false) String ninea,
             @RequestParam(value = "descriptionAgence", required = false) String descriptionAgence,
             @RequestParam(value = "registreCommerce", required = false) MultipartFile registreCommerce,
             @RequestParam(value = "pieceIdentite", required = false) MultipartFile pieceIdentite,
-            @RequestParam(value = "licencePro", required = false) MultipartFile licencePro,
+            @RequestParam(value = "nif", required = false) MultipartFile nif,
+            @RequestParam(value = "agrement", required = false) MultipartFile agrement,
             HttpServletRequest httpRequest) {
 
         log.info("Tentative d'inscription avec documents pour l'utilisateur: {}", username);
@@ -144,11 +144,10 @@ public class AuthController {
             request.setNomAgence(nomAgence);
             request.setAdresseAgence(adresseAgence);
             request.setTelephoneAgence(telephoneAgence);
-            request.setNinea(ninea);
             request.setDescriptionAgence(descriptionAgence);
 
             // Appeler le service d'inscription avec documents
-            authService.registerWithDocuments(request, registreCommerce, pieceIdentite, licencePro, httpRequest);
+            authService.registerWithDocuments(request, registreCommerce, pieceIdentite, nif, agrement, httpRequest);
 
             log.info("Inscription avec documents réussie pour l'utilisateur: {}", username);
 

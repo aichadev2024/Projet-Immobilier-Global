@@ -39,7 +39,7 @@ public interface AgenceRepository extends JpaRepository<Agence, UUID> {
 
     boolean existsByNumeroLicence(String numeroLicence);
     
-    boolean existsByNinea(String ninea);
+    boolean existsByNina(String nina);
     
     List<Agence> findByIsDeletedFalse();
 

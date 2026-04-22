@@ -11,7 +11,8 @@ public interface AuthService {
 
     void register(EnhancedRegisterRequest request, HttpServletRequest httpRequest);
 
-    void registerWithDocuments(EnhancedRegisterRequest request, MultipartFile registreCommerce, MultipartFile pieceIdentite, MultipartFile licencePro, HttpServletRequest httpRequest);
+    void registerWithDocuments(EnhancedRegisterRequest request, MultipartFile registreCommerce, MultipartFile pieceIdentite,
+                               MultipartFile nif, MultipartFile agrement, HttpServletRequest httpRequest);
 
     void logout(String refreshToken);
 

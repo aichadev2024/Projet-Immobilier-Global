@@ -146,7 +146,7 @@ function ParametresSection({ user }: { user: any }) {
                 {user?.prenom?.[0]}{user?.nom?.[0]}
              </div>
              <CardTitle className="text-xl font-black text-slate-900">{user?.prenom} {user?.nom}</CardTitle>
-             <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mt-1">Client BamakoHome</p>
+             <p className="text-xs text-blue-600 font-bold uppercase tracking-widest mt-1">Client Ika Bayt</p>
           </CardHeader>
           <CardContent className="p-8 space-y-6">
             <div className="space-y-4">
@@ -711,13 +711,13 @@ export default function UserDashboardPage() {
                     
                     {/* Indicateur visite payante/gratuite */}
                     <div className="mt-3">
-                      {bien.utilisateur?.agence?.visitePayante ? (
+                      {bien.visitePayante ? (
                         <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
                           <AlertCircle size={14} className="text-amber-600 flex-shrink-0" />
                           <div className="flex-1">
                             <span className="text-[10px] font-bold text-amber-800">Visite payante</span>
                             <span className="text-[10px] text-amber-700 ml-1">
-                              {bien.utilisateur.agence.tarifVisite?.toLocaleString()} FCFA
+                              {bien.tarifVisite?.toLocaleString()} FCFA
                             </span>
                           </div>
                         </div>
@@ -952,10 +952,10 @@ export default function UserDashboardPage() {
                  <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
                     <p className="text-xs font-bold text-slate-400 mb-1">BIEN SÉLECTIONNÉ</p>
                     <p className="font-black text-slate-800 line-clamp-1">{selectedBien.libelle}</p>
-                    {selectedBien.utilisateur?.agence?.visitePayante && (
+                    {selectedBien.visitePayante && (
                        <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-200">
                            <p className="text-amber-800 text-[11px] leading-tight font-bold">
-                               ⚠️ Cette agence applique des frais de visite de <span className="font-black text-amber-900">{selectedBien.utilisateur.agence.tarifVisite} FCFA</span>, généralement à prévoir sur place.
+                               ⚠️ Ce bien applique des frais de visite de <span className="font-black text-amber-900">{selectedBien.tarifVisite} FCFA</span>, généralement à prévoir sur place.
                            </p>
                        </div>
                     )}

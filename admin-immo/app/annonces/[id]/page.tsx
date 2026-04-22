@@ -242,13 +242,13 @@ export default function AnnonceDetails() {
                 </div>
 
                 <div className="space-y-4 mb-8">
-                  {bien.utilisateur?.agence?.visitePayante ? (
+                  {bien.visitePayante ? (
                      <div className="flex items-start gap-3 p-4 bg-amber-50 rounded-xl border-2 border-amber-200">
                        <AlertCircle size={24} className="text-amber-600 mt-0.5 flex-shrink-0" />
                        <div className="flex-1">
                          <p className="text-sm font-bold text-amber-900">Visite payante</p>
                          <p className="text-sm font-medium text-amber-700 mt-1">
-                           Frais de visite: <span className="font-black">{bien.utilisateur.agence.tarifVisite?.toLocaleString()} FCFA</span>
+                          Frais de visite: <span className="font-black">{bien.tarifVisite?.toLocaleString()} FCFA</span>
                          </p>
                          <p className="text-xs text-amber-600 mt-1">À prévoir lors de la visite sur place</p>
                        </div>
@@ -269,7 +269,7 @@ export default function AnnonceDetails() {
                     <ShieldCheck size={24} className="text-indigo-600" />
                     <div>
                       <p className="text-sm font-bold text-slate-900">Contact sécurisé</p>
-                      <p className="text-xs font-medium text-slate-500">Agences vérifiées par Immo Global</p>
+                      <p className="text-xs font-medium text-slate-500">Agences vérifiées par Ika Bayt</p>
                     </div>
                   </div>
                 </div>

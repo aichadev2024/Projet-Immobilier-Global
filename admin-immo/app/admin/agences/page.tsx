@@ -17,6 +17,7 @@ import {
   Download,
   Loader2
 } from "lucide-react";
+import { API_BASE_URL } from "@/services/api";
 
 interface Agence {
   id: string;
@@ -58,7 +59,7 @@ export default function AgencesPage() {
 
       console.log("📡 Récupération des agences depuis le backend...");
       
-      const response = await fetch("http://localhost:8080/api/admin/validation/agences", {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -142,7 +143,7 @@ export default function AgencesPage() {
 
       console.log(`✅ Validation de l'agence ${agenceId}...`);
       
-      const response = await fetch(`http://localhost:8080/api/admin/validation/agences/${agenceId}/valider`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences/${agenceId}/valider`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -189,7 +190,7 @@ export default function AgencesPage() {
 
       console.log(`❌ Refus de l'agence ${agenceId}...`);
       
-      const response = await fetch(`http://localhost:8080/api/admin/validation/agences/${agenceId}/refuser`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences/${agenceId}/refuser`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -233,7 +234,7 @@ export default function AgencesPage() {
         return;
       }
 
-      const response = await fetch(`http://localhost:8080/api/admin/validation/agences/${utilisateurId}/documents`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/agences/${utilisateurId}/documents`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -263,7 +264,7 @@ export default function AgencesPage() {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8080/api/admin/validation/documents/${documentId}/approuver`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/documents/${documentId}/approuver`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -292,7 +293,7 @@ export default function AgencesPage() {
       const token = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
       if (!token) return;
 
-      const response = await fetch(`http://localhost:8080/api/admin/validation/documents/${documentId}/rejeter`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/documents/${documentId}/rejeter`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -322,7 +323,7 @@ export default function AgencesPage() {
     }
     
     try {
-      const response = await fetch(`http://localhost:8080/api/admin/validation/documents/${documentId}/download`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/validation/documents/${documentId}/download`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`

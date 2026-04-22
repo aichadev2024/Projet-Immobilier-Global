@@ -629,9 +629,9 @@ function ReservationModal({
   console.log("*** MODAL RÉSERVATION - BIEN DATA:", {
     bienId: bien.id,
     agenceData: bien.utilisateur?.agence,
-    visitePayante: bien.utilisateur?.agence?.visitePayante,
-    tarifVisite: bien.utilisateur?.agence?.tarifVisite,
-    tarifType: typeof bien.utilisateur?.agence?.tarifVisite
+    visitePayante: bien.visitePayante,
+    tarifVisite: bien.tarifVisite,
+    tarifType: typeof bien.tarifVisite
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -656,14 +656,14 @@ function ReservationModal({
         </p>
 
         {/* Affichage du tarif de visite si payant */}
-        {bien.utilisateur?.agence?.visitePayante && (
+        {bien.visitePayante && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl">
             <div className="flex items-center gap-2">
               <AlertCircle size={18} className="text-amber-600" />
               <span className="text-sm font-bold text-amber-800">Visite payante</span>
             </div>
             <p className="text-sm text-amber-700 mt-1">
-              Cette agence facture les visites à <strong>{bien.utilisateur.agence.tarifVisite?.toLocaleString()} FCFA</strong>
+              Ce bien a une visite payante à <strong>{bien.tarifVisite?.toLocaleString()} FCFA</strong>
             </p>
           </div>
         )}

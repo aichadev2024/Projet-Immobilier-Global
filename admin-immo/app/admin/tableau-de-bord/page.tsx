@@ -249,7 +249,7 @@ export default function AdminDashboard() {
         },
         {
           id: "5",
-          user: "Agence Bamako Homes",
+          user: "Agence Ika Bayt",
           action: "Demande de validation",
           timestamp: "Il y a 3 heures",
           type: "warning"
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
               Tableau de <span className="text-yellow-300">bord</span>
             </h1>
             <p className="text-indigo-100 text-lg max-w-md">
-              Vue d'ensemble et gestion complète de la plateforme BamakoHome
+              Vue d'ensemble et gestion complète de la plateforme Ika Bayt
             </p>
           </div>
           <div className="flex items-center gap-3">

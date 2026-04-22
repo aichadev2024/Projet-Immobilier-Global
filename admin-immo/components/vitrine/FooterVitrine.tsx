@@ -101,7 +101,7 @@ export default function FooterVitrine() {
                 <Home className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-black text-white tracking-tight">
-                Bamako<span className="text-blue-500">Home</span>
+                Ika <span className="text-blue-500">Bayt</span>
               </span>
             </Link>
             <p className="text-slate-500 text-sm mb-6 leading-relaxed">
@@ -127,8 +127,8 @@ export default function FooterVitrine() {
                 <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center shrink-0">
                   <Mail className="w-4 h-4 text-blue-400" />
                 </div>
-                <a href="mailto:contact@bamakohome.com" className="hover:text-blue-400 transition-colors">
-                  contact@bamakohome.com
+                <a href="mailto:contact@ikabayt.com" className="hover:text-blue-400 transition-colors">
+                  contact@ikabayt.com
                 </a>
               </li>
             </ul>
@@ -233,7 +233,7 @@ export default function FooterVitrine() {
         <div className="mt-20 pt-8 border-t border-white/[0.05]">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <p className="text-xs font-medium text-slate-500">
-              © {new Date().getFullYear()} BamakoHome. Tous droits réservés.
+              © {new Date().getFullYear()} Ika Bayt. Tous droits réservés.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-6 text-xs font-bold text-slate-500">
               <Link href="#" className="hover:text-blue-400 transition-colors">Politique de confidentialité</Link>

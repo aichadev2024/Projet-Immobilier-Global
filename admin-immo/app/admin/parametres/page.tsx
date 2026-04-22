@@ -53,9 +53,9 @@ interface UserProfile {
 
 export default function ParametresPage() {
   const [settings, setSettings] = useState<PlatformSettings>({
-    nomPlatforme: "BamakoHome",
+    nomPlatforme: "Ika Bayt",
     logoUrl: "",
-    emailContact: "contact@bamakohome.com",
+    emailContact: "contact@ikabayt.com",
     telephoneContact: "+223 70 00 00 00",
     adresse: "Bamako, Mali",
     description: "Plateforme immobilière de référence au Mali",

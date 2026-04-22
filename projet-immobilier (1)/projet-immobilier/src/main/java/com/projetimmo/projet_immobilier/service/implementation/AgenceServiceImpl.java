@@ -226,10 +226,8 @@ public class AgenceServiceImpl implements AgenceService {
         agence.setSiteWeb(agenceData.getSiteWeb() != null ? agenceData.getSiteWeb() : agence.getSiteWeb());
         agence.setLogoUrl(agenceData.getLogoUrl() != null ? agenceData.getLogoUrl() : agence.getLogoUrl());
         agence.setDescription(agenceData.getDescription() != null ? agenceData.getDescription() : agence.getDescription());
-        agence.setNinea(agenceData.getNinea() != null ? agenceData.getNinea() : agence.getNinea());
+        agence.setNina(agenceData.getNina() != null ? agenceData.getNina() : agence.getNina());
         agence.setHorairesOuverture(agenceData.getHorairesOuverture() != null ? agenceData.getHorairesOuverture() : agence.getHorairesOuverture());
-        agence.setVisitePayante(agenceData.getVisitePayante() != null ? agenceData.getVisitePayante() : agence.getVisitePayante());
-        agence.setTarifVisite(agenceData.getTarifVisite() != null ? agenceData.getTarifVisite() : agence.getTarifVisite());
 
         return agenceRepository.save(agence);
     }

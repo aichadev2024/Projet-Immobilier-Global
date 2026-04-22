@@ -6,10 +6,11 @@ import Image from "next/image";
 import { 
   Mail, Lock, User, Phone, Eye, EyeOff, ShieldCheck, 
   ArrowRight, Building2, UserCircle2, CheckCircle2, 
-  AlertCircle, ChevronRight, Globe, MapPin, FileCheck,
+  AlertCircle, ChevronRight, MapPin, FileCheck,
   Upload, FileText, X
 } from "lucide-react";
 import BrandMark from "@/components/vitrine/BrandMark";
+import { API_BASE_URL } from "@/services/api";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -31,29 +32,30 @@ export default function RegisterPage() {
   const [nomAgence, setNomAgence] = useState("");
   const [adresseAgence, setAdresseAgence] = useState("");
   const [telephoneAgence, setTelephoneAgence] = useState("+223 ");
-  const [ninea, setNinea] = useState("");
   const [descriptionAgence, setDescriptionAgence] = useState("");
-  const [visitePayante, setVisitePayante] = useState(false);
-  const [tarifVisite, setTarifVisite] = useState(0);
 
   // États pour les documents de l'agence
   const [documents, setDocuments] = useState<{
     registreCommerce: File | null;
     pieceIdentite: File | null;
-    licencePro: File | null;
+    nif: File | null;
+    agrement: File | null;
   }>({
     registreCommerce: null,
     pieceIdentite: null,
-    licencePro: null,
+    nif: null,
+    agrement: null,
   });
   const [uploadProgress, setUploadProgress] = useState<{
     registreCommerce: number;
     pieceIdentite: number;
-    licencePro: number;
+    nif: number;
+    agrement: number;
   }>({
     registreCommerce: 0,
     pieceIdentite: 0,
-    licencePro: 0,
+    nif: 0,
+    agrement: 0,
   });
 
   const hasMinLength = motDePasse.length >= 8;
@@ -64,11 +66,10 @@ export default function RegisterPage() {
   const passwordsMatch = motDePasse !== "" && motDePasse === confirmPassword;
   
   const hasRequiredFields = nom.trim() !== "" && prenom.trim() !== "" && nomUtilisateur.trim() !== "" && email.trim() !== "" && motDePasse.trim() !== "" && confirmPassword.trim() !== "";
-  const hasAgencyRequiredFields = role === "AGENCE" && nomAgence.trim() !== "" && adresseAgence.trim() !== "" && telephoneAgence.trim() !== "" && ninea.trim() !== "";
-  const hasValidNINEA = /^\d{9}$/.test(ninea.trim()); // Exactement 9 chiffres requis
+  const hasAgencyRequiredFields = role === "AGENCE" && nomAgence.trim() !== "" && adresseAgence.trim() !== "" && telephoneAgence.trim() !== "";
   const hasValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  const hasRequiredDocuments = role !== "AGENCE" || (documents.registreCommerce !== null && documents.pieceIdentite !== null);
-  const canSubmit = hasRequiredFields && hasValidEmail && hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && passwordsMatch && (role !== "AGENCE" || (hasAgencyRequiredFields && hasValidNINEA && hasRequiredDocuments)) && !loading;
+  const hasRequiredDocuments = role !== "AGENCE" || (documents.registreCommerce !== null && documents.pieceIdentite !== null && documents.nif !== null);
+  const canSubmit = hasRequiredFields && hasValidEmail && hasMinLength && hasUpperCase && hasLowerCase && hasNumber && hasSpecialChar && passwordsMatch && (role !== "AGENCE" || (hasAgencyRequiredFields && hasRequiredDocuments)) && !loading;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,12 +92,7 @@ export default function RegisterPage() {
         formData.append("nomAgence", nomAgence);
         formData.append("adresseAgence", adresseAgence);
         formData.append("telephoneAgence", telephoneAgence);
-        formData.append("ninea", ninea);
         formData.append("descriptionAgence", descriptionAgence);
-        formData.append("visitePayante", visitePayante ? "true" : "false");
-        if (visitePayante && tarifVisite > 0) {
-          formData.append("tarifVisite", tarifVisite.toString());
-        }
 
         // Ajouter les documents
         if (documents.registreCommerce) {
@@ -105,12 +101,15 @@ export default function RegisterPage() {
         if (documents.pieceIdentite) {
           formData.append("pieceIdentite", documents.pieceIdentite);
         }
-        if (documents.licencePro) {
-          formData.append("licencePro", documents.licencePro);
+        if (documents.nif) {
+          formData.append("nif", documents.nif);
+        }
+        if (documents.agrement) {
+          formData.append("agrement", documents.agrement);
         }
       }
 
-      const res = await fetch("http://localhost:8080/auth/register", {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         body: formData
       });
@@ -139,7 +138,7 @@ export default function RegisterPage() {
   const accentRing = isAgency ? "focus:ring-emerald-500/50" : "focus:ring-indigo-500/50";
 
   // Fonctions de gestion des documents
-  const handleDocumentSelect = (type: 'registreCommerce' | 'pieceIdentite' | 'licencePro', file: File | null) => {
+  const handleDocumentSelect = (type: 'registreCommerce' | 'pieceIdentite' | 'nif' | 'agrement', file: File | null) => {
     setDocuments(prev => ({ ...prev, [type]: file }));
     if (file) {
       // Simuler la progression du téléchargement
@@ -155,7 +154,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleDocumentRemove = (type: 'registreCommerce' | 'pieceIdentite' | 'licencePro') => {
+  const handleDocumentRemove = (type: 'registreCommerce' | 'pieceIdentite' | 'nif' | 'agrement') => {
     setDocuments(prev => ({ ...prev, [type]: null }));
     setUploadProgress(prev => ({ ...prev, [type]: 0 }));
   };
@@ -362,54 +361,10 @@ export default function RegisterPage() {
                   </div>
                   <input type="text" value={nomAgence} onChange={(e) => setNomAgence(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-emerald-100 bg-white text-xs font-bold text-emerald-900 outline-none" placeholder="Nom Commercial" required />
                   <input type="text" value={adresseAgence} onChange={(e) => setAdresseAgence(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-emerald-100 bg-white text-xs font-bold text-emerald-900 outline-none" placeholder="Adresse Siège" required />
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2">
                     <input type="tel" value={telephoneAgence} onChange={(e) => setTelephoneAgence(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-emerald-100 bg-white text-xs font-bold text-emerald-900 outline-none" placeholder="Tél. de l'agence" required />
-                    <input type="text" value={ninea} onChange={(e) => setNinea(e.target.value)} className={`w-full px-4 py-2 rounded-xl border ${ninea.length > 0 && !hasValidNINEA ? 'border-orange-400 text-orange-600 focus:border-orange-400/50' : 'border-emerald-100'} bg-white text-xs font-bold text-emerald-900 outline-none`} placeholder="NIF / NINA" required />
                   </div>
                   <textarea value={descriptionAgence} onChange={(e) => setDescriptionAgence(e.target.value)} className="w-full px-4 py-2 rounded-xl border border-emerald-100 bg-white text-xs font-bold text-emerald-900 outline-none resize-none" placeholder="Description courte de l'agence (optionnel)" rows={2} />
-
-                  {/* Visites payantes */}
-                  <div className="mt-3 p-3 bg-white rounded-xl border border-emerald-100">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Globe size={16} className="text-emerald-600" />
-                        <span className="text-xs font-bold text-emerald-900">Visites payantes ?</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setVisitePayante(false)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${!visitePayante ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                          Non (Gratuit)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setVisitePayante(true)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${visitePayante ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
-                        >
-                          Oui (Payant)
-                        </button>
-                      </div>
-                    </div>
-                    {visitePayante && (
-                      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-emerald-100">
-                        <span className="text-xs text-slate-500">Tarif par visite:</span>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            value={tarifVisite}
-                            onChange={(e) => setTarifVisite(Number(e.target.value))}
-                            className="w-24 px-3 py-1.5 rounded-lg border border-emerald-200 bg-white text-xs font-bold text-emerald-900 outline-none"
-                            placeholder="5000"
-                            min="0"
-                            step="100"
-                          />
-                          <span className="text-xs text-slate-600 font-medium">FCFA</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
 
                   {/* Documents de l'agence */}
                   <div className="mt-4 pt-4 border-t border-emerald-200">
@@ -419,9 +374,9 @@ export default function RegisterPage() {
                       <span className="text-[10px] text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">Requis</span>
                     </div>
 
-                    {/* Registre de Commerce / NINEA */}
+                    {/* RCCM/NINA */}
                     <DocumentUploadField
-                      label="Registre de Commerce ou NINEA"
+                      label="RCCM / NINA"
                       description="Document justifiant l'existence légale de l'agence"
                       file={documents.registreCommerce}
                       progress={uploadProgress.registreCommerce}
@@ -441,14 +396,25 @@ export default function RegisterPage() {
                       acceptedTypes=".pdf,.jpg,.jpeg,.png"
                     />
 
-                    {/* Licence professionnelle (optionnel) */}
+                    {/* NIF (obligatoire) */}
                     <DocumentUploadField
-                      label="Licence professionnelle (optionnel)"
-                      description="Licence d'agence immobilière si applicable"
-                      file={documents.licencePro}
-                      progress={uploadProgress.licencePro}
-                      onFileSelect={(file) => handleDocumentSelect('licencePro', file)}
-                      onFileRemove={() => handleDocumentRemove('licencePro')}
+                      label="NIF (obligatoire)"
+                      description="Document fiscal (NIF) de l'agence"
+                      file={documents.nif}
+                      progress={uploadProgress.nif}
+                      onFileSelect={(file) => handleDocumentSelect('nif', file)}
+                      onFileRemove={() => handleDocumentRemove('nif')}
+                      acceptedTypes=".pdf,.jpg,.jpeg,.png"
+                    />
+
+                    {/* Agrément (optionnel) */}
+                    <DocumentUploadField
+                      label="Agrément (optionnel)"
+                      description="Agrément d'agence immobilière si applicable"
+                      file={documents.agrement}
+                      progress={uploadProgress.agrement}
+                      onFileSelect={(file) => handleDocumentSelect('agrement', file)}
+                      onFileRemove={() => handleDocumentRemove('agrement')}
                       acceptedTypes=".pdf,.jpg,.jpeg,.png"
                       required={false}
                     />

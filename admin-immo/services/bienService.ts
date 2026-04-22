@@ -1,7 +1,9 @@
+import { API_BASE_URL } from "./api";
+
 export async function getBiens() {
   try {
-    console.log("Appel API: http://localhost:8080/api/biens");
-    const res = await fetch("http://localhost:8080/api/biens", {
+    console.log(`Appel API: ${API_BASE_URL}/api/biens`);
+    const res = await fetch(`${API_BASE_URL}/api/biens`, {
       cache: "no-store",
       headers: {
         'Content-Type': 'application/json',
@@ -46,9 +48,9 @@ export async function getBiens() {
       };
       
       // Forcer visite payante sur le premier bien pour test
-      if (index === 0 && testBien.utilisateur?.agence) {
-        testBien.utilisateur.agence.visitePayante = true;
-        testBien.utilisateur.agence.tarifVisite = 10000;
+      if (index === 0) {
+        testBien.visitePayante = true;
+        testBien.tarifVisite = 10000;
       }
       
       return testBien;
@@ -66,8 +68,8 @@ export async function getBiens() {
 export async function getBiensAdmin() {
   try {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    console.log("Appel API Admin: http://localhost:8080/api/biens/admin");
-    const res = await fetch("http://localhost:8080/api/biens/admin", {
+    console.log(`Appel API Admin: ${API_BASE_URL}/api/biens/admin`);
+    const res = await fetch(`${API_BASE_URL}/api/biens/admin`, {
       cache: "no-store",
       headers: {
         'Content-Type': 'application/json',
@@ -106,8 +108,8 @@ export async function getBiensAdmin() {
 export async function getBiensAgence() {
   try {
     const token = localStorage.getItem('accessToken') || sessionStorage.getItem('accessToken');
-    console.log("Appel API Agence: http://localhost:8080/api/biens/agence");
-    const res = await fetch("http://localhost:8080/api/biens/agence", {
+    console.log(`Appel API Agence: ${API_BASE_URL}/api/biens/agence`);
+    const res = await fetch(`${API_BASE_URL}/api/biens/agence`, {
       cache: "no-store",
       headers: {
         'Content-Type': 'application/json',
@@ -197,11 +199,10 @@ function getDemoBiens() {
       utilisateur: {
         nom: "Agence Prestige",
         telephone: "+22320202020",
-        agence: {
-          visitePayante: true,
-          tarifVisite: 5000
-        }
       }
+      ,
+      visitePayante: true,
+      tarifVisite: 5000
     },
     {
       id: 1002,
@@ -219,11 +220,10 @@ function getDemoBiens() {
       utilisateur: {
         nom: "Immo City",
         telephone: "+22320202021",
-        agence: {
-          visitePayante: false,
-          tarifVisite: 0
-        }
       }
+      ,
+      visitePayante: false,
+      tarifVisite: 0
     },
     {
       id: 1003,
@@ -241,11 +241,10 @@ function getDemoBiens() {
       utilisateur: {
         nom: "Student Housing",
         telephone: "+22320202022",
-        agence: {
-          visitePayante: false,
-          tarifVisite: 0
-        }
       }
+      ,
+      visitePayante: false,
+      tarifVisite: 0
     },
     {
       id: 1004,
@@ -263,11 +262,10 @@ function getDemoBiens() {
       utilisateur: {
         nom: "Habitat Mali",
         telephone: "+22320202023",
-        agence: {
-          visitePayante: true,
-          tarifVisite: 7500
-        }
       }
+      ,
+      visitePayante: true,
+      tarifVisite: 7500
     },
     {
       id: 1005,
@@ -284,11 +282,10 @@ function getDemoBiens() {
       utilisateur: {
         nom: "Business Properties",
         telephone: "+22320202024",
-        agence: {
-          visitePayante: false,
-          tarifVisite: 0
-        }
       }
+      ,
+      visitePayante: false,
+      tarifVisite: 0
     }
   ];
 }

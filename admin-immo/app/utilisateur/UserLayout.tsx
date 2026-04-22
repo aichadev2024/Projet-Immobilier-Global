@@ -222,7 +222,7 @@ export function UserLayout({ children, activeSection, onSectionChange }: UserLay
                 <Home className="h-7 w-7 text-white" />
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-slate-900 text-2xl tracking-tighter leading-none mb-1">BamakoHome</span>
+                <span className="font-black text-slate-900 text-2xl tracking-tighter leading-none mb-1">Ika Bayt</span>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                   <span className="text-[10px] text-blue-600 font-black uppercase tracking-widest bg-blue-50/80 px-1.5 py-0.5 rounded-md">Espace Client</span>

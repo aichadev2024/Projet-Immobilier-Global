@@ -30,6 +30,7 @@ public class TypeBien {
     @Column(nullable = false)
     private ModeTarification modeTarification;
     
+    @Builder.Default
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal tarifBase = BigDecimal.ZERO;
 

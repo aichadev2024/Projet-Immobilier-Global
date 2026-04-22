@@ -144,7 +144,7 @@ public class AdminAgenceController {
         map.put("adresse", agence.getAdresse());
         map.put("ville", agence.getVille());
         map.put("pays", agence.getPays());
-        map.put("ninea", agence.getNinea());
+        map.put("nina", agence.getNina());
         map.put("statut", agence.getStatut().toString());
         map.put("createdAt", agence.getCreatedAt() != null ? agence.getCreatedAt().toString() : null);
         

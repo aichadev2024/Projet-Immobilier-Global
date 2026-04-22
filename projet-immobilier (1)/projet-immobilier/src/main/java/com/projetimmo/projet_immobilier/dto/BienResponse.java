@@ -27,6 +27,8 @@ public class BienResponse {
     private java.math.BigDecimal prix;
     private java.math.BigDecimal commission;
     private Integer superficie;
+    private Boolean visitePayante;
+    private Double tarifVisite;
     private StatutBien statutBien;
     private LocalDateTime dateCreation;
     private LocalDateTime datePublication;
@@ -71,8 +73,6 @@ public class BienResponse {
         private String email;
         private String siteWeb;
         private String whatsapp;
-        private Boolean visitePayante;
-        private Double tarifVisite;
     }
     
     @Data

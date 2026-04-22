@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL, apiFetch } from "@/services/api";
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
@@ -41,29 +42,22 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
 
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/utilisateurs/me", {
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
-        if (!res.ok) {
-          if (res.status === 401) {
-            // Token expired or invalid - clean redirect without console error
-            localStorage.removeItem("accessToken");
-            sessionStorage.removeItem("accessToken");
-            localStorage.removeItem("role");
-            sessionStorage.removeItem("role");
-            router.push("/login");
-            return;
-          }
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const data = await res.json();
+        const data = await apiFetch(`${API_BASE_URL}/api/utilisateurs/me`);
         console.log("👤 User data received:", data);
         setUser(data);
         // Store user role for filtering navigation
         setUserRole(data.role || localStorage.getItem("role") || sessionStorage.getItem("role"));
-      } catch (error) {
+      } catch (error: unknown) {
+        // Handle 401 and other errors gracefully
+        if (error instanceof Error && error.message.includes("401")) {
+          // Token expired or invalid - clean redirect without console error
+          localStorage.removeItem("accessToken");
+          sessionStorage.removeItem("accessToken");
+          localStorage.removeItem("role");
+          sessionStorage.removeItem("role");
+          router.push("/login");
+          return;
+        }
         // Only log real errors, not auth redirects
         if (error instanceof Error && !error.message.includes("redirect")) {
           console.error("Erreur d'authentification:", error);
@@ -79,7 +73,8 @@ export default function AgenceLayout({ children }: { children: React.ReactNode }
     };
 
     fetchProfile();
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // 👈 [] = exécute une seule fois, pas de boucle
 
   // Filter navigation based on user role - AGENT cannot see Agents menu
   const allNavigation = [

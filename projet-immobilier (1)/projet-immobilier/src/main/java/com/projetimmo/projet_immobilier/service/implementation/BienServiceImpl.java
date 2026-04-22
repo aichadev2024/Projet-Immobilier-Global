@@ -111,6 +111,8 @@ public class BienServiceImpl implements BienService {
                 .prix(bien.getPrix())
                 .commission(bien.getCommission())
                 .prixCalculer(bien.getPrixCalculer())
+                .visitePayante(bien.getVisitePayante())
+                .tarifVisite(bien.getTarifVisite())
                 .statutBien(bien.getStatutBien())
                 .transactionType(bien.getTransactionType())
                 .dateCreation(bien.getCreatedAt())
@@ -177,8 +179,7 @@ public class BienServiceImpl implements BienService {
                         .telephone(agence.getTelephone())
                         .email(agence.getEmail())
                         .siteWeb(agence.getSiteWeb())
-                        .visitePayante(agence.getVisitePayante())
-                        .tarifVisite(agence.getTarifVisite())
+                        .whatsapp(agence.getTelephone())
                         .build())
                 .build();
     }
@@ -235,6 +236,10 @@ public class BienServiceImpl implements BienService {
                 .prixCalculer(request.getPrix().add(commission))
                 .statutBien(StatutBien.DISPONIBLE) // 🆕 Les biens sont directement disponibles
                 .transactionType(request.getTransactionType())
+                .visitePayante(Boolean.TRUE.equals(request.getVisitePayante()))
+                .tarifVisite(Boolean.TRUE.equals(request.getVisitePayante()) && request.getTarifVisite() != null
+                        ? request.getTarifVisite().doubleValue()
+                        : null)
                 .agence(agence)
                 .createdBy(utilisateurConnecte)
                 .build();
@@ -348,6 +353,12 @@ public class BienServiceImpl implements BienService {
                 : null);
         bien.setSuperficie(request.getSuperficie());
         bien.setTransactionType(request.getTransactionType());
+
+        // Visite payante au niveau du bien
+        boolean visitePayante = Boolean.TRUE.equals(request.getVisitePayante());
+        bien.setVisitePayante(visitePayante);
+        bien.setTarifVisite(visitePayante && request.getTarifVisite() != null ? request.getTarifVisite().doubleValue()
+                : null);
 
         // Mise à jour du type de bien si nécessaire
         if (request.getIdTypeBien() != null && !request.getIdTypeBien().equals(bien.getTypeBien().getId())) {

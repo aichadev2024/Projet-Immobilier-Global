@@ -279,7 +279,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
             <div className="ml-4">
               <h2 className="text-lg font-bold text-white tracking-tight">Panneau Admin</h2>
-              <p className="text-xs text-indigo-300/80 font-medium tracking-wide">BamakoHome</p>
+              <p className="text-xs text-indigo-300/80 font-medium tracking-wide">Ika Bayt</p>
             </div>
           </div>
           <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">

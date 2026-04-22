@@ -3,6 +3,7 @@ package com.projetimmo.projet_immobilier.dto;
 import lombok.Data;
 import jakarta.validation.constraints.*;
 import com.projetimmo.projet_immobilier.enums.TransactionType;
+import java.math.BigDecimal;
 
 @Data
 public class BienRequest {
@@ -33,4 +34,10 @@ public class BienRequest {
 
     @NotNull(message = "Le type de transaction est obligatoire")
     private TransactionType transactionType;
+
+    // Visite payante au niveau du bien (pas de l'agence)
+    private Boolean visitePayante;
+
+    @PositiveOrZero(message = "Le tarif de visite doit être supérieur ou égal à 0")
+    private BigDecimal tarifVisite;
 }

@@ -40,10 +40,7 @@ public class EnhancedRegisterRequest {
     private String nomAgence;
     private String adresseAgence;
     private String telephoneAgence;
-    private String ninea;
     private String descriptionAgence;
-    private Boolean visitePayante;
-    private Double tarifVisite;
 
     // Champs spécifiques UTILISATEUR
     private String telephone;

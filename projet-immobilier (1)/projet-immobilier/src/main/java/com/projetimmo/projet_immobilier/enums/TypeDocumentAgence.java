@@ -1,7 +1,11 @@
 package com.projetimmo.projet_immobilier.enums;
 
 public enum TypeDocumentAgence {
+    // Ancien libellé conservé pour compatibilité (legacy)
     LICENCE_PROFESSIONNELLE,
+    // Nouveau libellé officiel
+    AGREMENT,
+    NIF,
     CARTE_PROFESSIONNELLE,
     REGISTRE_COMMERCE,
     AUTORISATION_AGENCE,

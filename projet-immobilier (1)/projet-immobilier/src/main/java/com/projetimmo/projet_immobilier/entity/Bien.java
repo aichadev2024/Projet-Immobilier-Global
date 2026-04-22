@@ -64,6 +64,12 @@ public class Bien {
     @Builder.Default
     private Boolean isDeleted = false;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Boolean visitePayante = false;
+
+    private Double tarifVisite;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
